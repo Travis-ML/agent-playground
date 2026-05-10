@@ -119,3 +119,25 @@ def test_openai_client_basic_stream(fixtures_dir: Path, monkeypatch: pytest.Monk
     assert len(completes) == 1
     assert completes[0].usage.output_tokens == 7
     assert completes[0].stop_reason == "stop"
+
+
+# ---------------- LM Studio ----------------
+
+def test_lmstudio_client_subclasses_openai(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://example.invalid:1234/v1")
+    from playground.providers.lmstudio_client import LMStudioClient
+    from playground.providers.openai_client import OpenAIClient
+
+    c = LMStudioClient(model="local-model")
+    assert isinstance(c, OpenAIClient)
+    assert c.name == "lmstudio"
+
+
+def test_discover_lmstudio_models_returns_empty_when_unreachable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from playground.providers.lmstudio_client import discover_lmstudio_models
+
+    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1/v1")  # unlikely to be live
+    models = discover_lmstudio_models(timeout=0.1)
+    assert models == []
