@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import os
 from pathlib import Path
 
@@ -96,7 +97,7 @@ def _status_card(title: str, model_summary: str, connected: bool) -> str:
 
 anthropic_ok = bool(os.getenv("ANTHROPIC_API_KEY"))
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
-lmstudio_url = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+lmstudio_url = html.escape(os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"))
 
 cols = st.columns(3, gap="medium")
 with cols[0]:
