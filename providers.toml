@@ -1,0 +1,24 @@
+# Provider catalog. Edit this file to add/remove models or change defaults.
+# Secrets (API keys, base URLs) live in .env.
+
+[anthropic]
+models = ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"]
+default_model = "claude-sonnet-4-6"
+default_max_tokens = 4096
+default_temperature = 1.0
+capabilities = ["tools", "streaming", "prompt_caching", "mcp_native"]
+
+[openai]
+models = ["gpt-4o", "gpt-4o-mini", "o1"]
+default_model = "gpt-4o"
+default_max_tokens = 4096
+default_temperature = 1.0
+capabilities = ["tools", "streaming"]
+
+[lmstudio]
+# Models discovered at runtime from /v1/models — empty static list.
+models = []
+default_model = ""
+default_max_tokens = 2048
+default_temperature = 0.7
+capabilities = ["tools", "streaming"]
