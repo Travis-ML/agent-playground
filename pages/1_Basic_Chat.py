@@ -28,6 +28,7 @@ from playground.prompts.loader import list_prompts, load_prompt
 from playground.providers.base import (
     ChatMessage,
     TextBlock,
+    ToolDefinition,
     ToolResultBlock,
     ToolUseBlock,
 )
@@ -186,7 +187,10 @@ if "conversation" not in st.session_state or st.session_state.get("conv_provider
                     {"server": s, "tools": [t.name for t in mcp_tools_meta if t.server == s]}
                     for s in enabled_servers
                 ],
-                "builtin": [],
+                "builtin": (
+                    ["read_mcp_resource"]
+                    if (mcp_servers and pool and enabled_servers) else []
+                ),
             },
             "mcp_servers_enabled": list(enabled_servers),
         },
@@ -263,6 +267,55 @@ if mcp_servers and pool and enabled_servers:
             st.rerun()
 
 
+# ---------------- MCP resources ----------------
+
+attached_resources: list[dict[str, str]] = []
+if mcp_servers and pool and enabled_servers:
+    try:
+        resources = pool.list_resources(enabled_servers)
+    except Exception as e:
+        st.sidebar.error(f"MCP list_resources failed: {e}")
+        resources = []
+
+    if resources:
+        st.sidebar.markdown('<div class="tml-label">MCP resources</div>', unsafe_allow_html=True)
+        for r in resources:
+            uri_label = r.uri.split("/")[-1] or r.uri
+            label = f"{r.server}/{uri_label}"
+            if st.sidebar.checkbox(label, key=f"_mcp_res_{r.server}_{r.uri}"):
+                attached_resources.append({
+                    "server": r.server, "uri": r.uri, "mime_type": r.mime_type,
+                })
+        if st.sidebar.button("Refresh resources"):
+            st.rerun()
+
+
+# ---------------- Builtin tools (when MCP active) ----------------
+
+builtin_tools: list[ToolDefinition] = []
+if mcp_servers and pool and enabled_servers:
+    builtin_tools.append(
+        ToolDefinition(
+            name="read_mcp_resource",
+            description=(
+                "Read an MCP resource by URI (use when you see a uri the user "
+                "mentioned or one returned by another tool)."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "server": {"type": "string", "description": "MCP server name"},
+                    "uri": {"type": "string", "description": "Resource URI"},
+                },
+                "required": ["server", "uri"],
+            },
+        )
+    )
+
+# Append builtin tools to active tools list
+active_tools = active_tools + builtin_tools
+
+
 # ---------------- Transcript ----------------
 
 st.markdown(
@@ -279,12 +332,41 @@ for m in messages:
 # ---------------- Input + send ----------------
 
 if prompt := st.chat_input("Ask anything..."):
-    user_msg = ChatMessage(role="user", content=[TextBlock(type="text", text=prompt)])
+    preamble_blocks: list = []
+    for ar in attached_resources:
+        try:
+            content_text = (
+                pool.read_resource(ar["server"], ar["uri"])
+                if pool else "[pool unavailable]"
+            )
+        except Exception as e:
+            content_text = f"[failed to read {ar['uri']}: {e}]"
+        preamble_blocks.append(
+            TextBlock(
+                type="text",
+                text=(
+                    f'<resource uri="{ar["uri"]}" mimeType="{ar["mime_type"]}">\n'
+                    f'{content_text}\n</resource>'
+                ),
+            )
+        )
+        conv.add_event({
+            "ts": _now_iso(),
+            "type": "resource_attached",
+            "server": ar["server"], "uri": ar["uri"],
+        })
+
+    user_msg = ChatMessage(
+        role="user",
+        content=preamble_blocks + [TextBlock(type="text", text=prompt)],
+    )
     messages.append(user_msg)
     conv.append_message({
         "role": "user",
         "ts": _now_iso(),
-        "content": [{"type": "text", "text": prompt}],
+        "content": [
+            {"type": "text", "text": b.text} for b in user_msg.content
+        ],
     })
     render_message(user_msg)
 
@@ -321,6 +403,8 @@ if prompt := st.chat_input("Ask anything..."):
                     src: dict[str, str] = {"kind": "local"}
                 elif tc.name in tool_to_server:
                     src = {"kind": "mcp", "server": tool_to_server[tc.name]}
+                elif tc.name == "read_mcp_resource":
+                    src = {"kind": "builtin"}
                 else:
                     src = {"kind": "unknown"}
                 content_blocks.append(
@@ -367,6 +451,15 @@ if prompt := st.chat_input("Ask anything..."):
                         if pool is None:
                             raise RuntimeError("MCP pool unavailable")
                         out_text = pool.call_tool(server, tc.name, tc.input)
+                    elif tc.name == "read_mcp_resource":
+                        server = tc.input.get("server", "")
+                        uri = tc.input.get("uri", "")
+                        source = {"kind": "builtin"}
+                        if pool is None:
+                            out_text = "[pool unavailable]"
+                            is_err = True
+                        else:
+                            out_text = pool.read_resource(server, uri)
                     else:
                         out_text = f"Unknown tool: {tc.name}"
                         is_err = True
