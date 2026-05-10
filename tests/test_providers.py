@@ -141,3 +141,28 @@ def test_discover_lmstudio_models_returns_empty_when_unreachable(
     monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1/v1")  # unlikely to be live
     models = discover_lmstudio_models(timeout=0.1)
     assert models == []
+
+
+# ---------------- Registry ----------------
+
+def test_registry_lists_available_providers_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    from playground.providers.registry import list_available_providers
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1/v1")  # unreachable
+
+    avail = list_available_providers(check_lmstudio=False)
+    assert "anthropic" in avail
+    assert "openai" not in avail
+    assert "lmstudio" in avail   # presence of env var, not reachability, when check disabled
+
+
+def test_registry_get_client_returns_correct_subclass(monkeypatch: pytest.MonkeyPatch) -> None:
+    from playground.providers.anthropic_client import AnthropicClient
+    from playground.providers.registry import get_client
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    c = get_client("anthropic", "claude-sonnet-4-6")
+    assert isinstance(c, AnthropicClient)
+    assert c.model == "claude-sonnet-4-6"
