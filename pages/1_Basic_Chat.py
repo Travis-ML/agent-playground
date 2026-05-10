@@ -21,6 +21,8 @@ from playground.chat_ui import (
     render_tool_call_block,
     stream_assistant_turn,
 )
+from playground.mcp.client import MCPClientPool, MCPTool
+from playground.mcp.config import load_mcp_config
 from playground.persistence import ConversationStore
 from playground.prompts.loader import list_prompts, load_prompt
 from playground.providers.base import (
@@ -115,6 +117,52 @@ enabled_local: list[str] = st.sidebar.multiselect(
 active_tools = [t for t in local_tool_defs if t.name in enabled_local]
 
 
+# ---------------- MCP servers ----------------
+
+mcp_servers = load_mcp_config()
+mcp_tool_defs: list = []
+mcp_tools_meta: list[MCPTool] = []
+enabled_servers: list[str] = []
+pool: MCPClientPool | None = None
+
+if mcp_servers:
+    if "mcp_pool" not in st.session_state:
+        try:
+            new_pool = MCPClientPool()
+            new_pool.start(mcp_servers)
+            st.session_state.mcp_pool = new_pool
+        except Exception as e:
+            st.session_state.mcp_pool = None
+            st.sidebar.error(f"MCP pool failed to start: {e}")
+    pool = st.session_state.get("mcp_pool")
+
+    if pool:
+        st.sidebar.markdown('<div class="tml-label">MCP servers</div>', unsafe_allow_html=True)
+        for name, cfg in mcp_servers.items():
+            label = f"{name} — {cfg.description}" if cfg.description else name
+            if st.sidebar.checkbox(label, value=cfg.enabled, key=f"_mcp_{name}"):
+                enabled_servers.append(name)
+
+        if st.sidebar.button("Reload mcp.json"):
+            pool.shutdown()
+            st.session_state.pop("mcp_pool", None)
+            st.rerun()
+
+        try:
+            mcp_tools_meta = pool.list_tools(enabled_servers)
+            mcp_tool_defs = [t.to_tool_definition() for t in mcp_tools_meta]
+        except Exception as e:
+            st.sidebar.error(f"MCP list_tools failed: {e}")
+            mcp_tools_meta = []
+            mcp_tool_defs = []
+
+        # Map name → server for dispatch
+        st.session_state._mcp_tool_to_server = {t.name: t.server for t in mcp_tools_meta}
+
+# Append MCP tools to the active tool list passed to providers
+active_tools = active_tools + mcp_tool_defs
+
+
 # ---------------- Conversation state ----------------
 
 store = ConversationStore()
@@ -132,8 +180,15 @@ if "conversation" not in st.session_state or st.session_state.get("conv_provider
                 "source": prompt_choice if prompt_choice != "(none)" else None,
                 "text": system_prompt or "",
             },
-            "tools": {"local": [t.name for t in active_tools], "mcp": [], "builtin": []},
-            "mcp_servers_enabled": [],
+            "tools": {
+                "local": [t.name for t in local_tool_defs if t.name in enabled_local],
+                "mcp": [
+                    {"server": s, "tools": [t.name for t in mcp_tools_meta if t.server == s]}
+                    for s in enabled_servers
+                ],
+                "builtin": [],
+            },
+            "mcp_servers_enabled": list(enabled_servers),
         },
     )
     st.session_state.messages = []
@@ -168,6 +223,9 @@ if prompt := st.chat_input("Ask anything..."):
     })
     render_message(user_msg)
 
+    tool_to_server: dict[str, str] = st.session_state.get("_mcp_tool_to_server", {})
+    local_names = {t.name for t in get_local_tools()}
+
     MAX_ITERS = 10
     for _ in range(MAX_ITERS):
         with st.chat_message("assistant", avatar="◐"):
@@ -194,10 +252,16 @@ if prompt := st.chat_input("Ask anything..."):
             if full_text:
                 content_blocks.append(TextBlock(type="text", text=full_text))
             for tc in tool_calls:
+                if tc.name in local_names:
+                    src: dict[str, str] = {"kind": "local"}
+                elif tc.name in tool_to_server:
+                    src = {"kind": "mcp", "server": tool_to_server[tc.name]}
+                else:
+                    src = {"kind": "unknown"}
                 content_blocks.append(
                     ToolUseBlock(
                         type="tool_use", id=tc.id, name=tc.name, input=tc.input,
-                        source={"kind": "local"},
+                        source=src,
                     )
                 )
             asst_msg = ChatMessage(role="assistant", content=content_blocks)
@@ -227,15 +291,26 @@ if prompt := st.chat_input("Ask anything..."):
             for tc in tool_calls:
                 t0 = time.time()
                 is_err = False
+                source: dict[str, str] = {"kind": "local"}
                 try:
-                    out = call_local_tool(tc.name, tc.input)
-                    out_text = out if isinstance(out, str) else json.dumps(out)
+                    if tc.name in local_names:
+                        out = call_local_tool(tc.name, tc.input)
+                        out_text = out if isinstance(out, str) else json.dumps(out)
+                    elif tc.name in tool_to_server:
+                        server = tool_to_server[tc.name]
+                        source = {"kind": "mcp", "server": server}
+                        if pool is None:
+                            raise RuntimeError("MCP pool unavailable")
+                        out_text = pool.call_tool(server, tc.name, tc.input)
+                    else:
+                        out_text = f"Unknown tool: {tc.name}"
+                        is_err = True
                 except Exception as e:
                     out_text = f"{type(e).__name__}: {e}"
                     is_err = True
                 duration_ms = int((time.time() - t0) * 1000)
                 render_tool_call_block(
-                    name=tc.name, source={"kind": "local"}, input=tc.input,
+                    name=tc.name, source=source, input=tc.input,
                     result_text=out_text, duration_ms=duration_ms, is_error=is_err,
                 )
                 tool_result_blocks.append(
