@@ -1,27 +1,41 @@
-"""Basic Chat — multi-provider streaming chat, no tools yet."""
+"""Basic Chat — multi-provider streaming chat with local tool-use loop."""
 
 from __future__ import annotations
 
+import json
+import time
 from datetime import UTC, datetime
+from typing import Any
 
 import streamlit as st
 from dotenv import load_dotenv
 
+import playground.tools.examples  # noqa: F401, E402  -- registers echo, get_current_time
 from playground.branding import (
     inject_brand_css,
     render_brand_wordmark,
     render_theme_toggle,
 )
-from playground.chat_ui import render_message, render_text_stream
+from playground.chat_ui import (
+    render_message,
+    render_tool_call_block,
+    stream_assistant_turn,
+)
 from playground.persistence import ConversationStore
 from playground.prompts.loader import list_prompts, load_prompt
-from playground.providers.base import ChatMessage, MessageComplete, TextBlock
+from playground.providers.base import (
+    ChatMessage,
+    TextBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+)
 from playground.providers.config import load_providers_config
 from playground.providers.registry import (
     get_client,
     list_available_providers,
     list_models,
 )
+from playground.tools import call_local_tool, get_local_tools
 
 load_dotenv()
 
@@ -88,6 +102,19 @@ system_prompt = st.sidebar.text_area(
 )
 
 
+# ---------------- Local tools ----------------
+
+st.sidebar.markdown('<div class="tml-label">Local tools</div>', unsafe_allow_html=True)
+local_tool_defs = get_local_tools()
+enabled_local: list[str] = st.sidebar.multiselect(
+    "Enabled",
+    [t.name for t in local_tool_defs],
+    default=[t.name for t in local_tool_defs],
+    key="enabled_local_tools",
+)
+active_tools = [t for t in local_tool_defs if t.name in enabled_local]
+
+
 # ---------------- Conversation state ----------------
 
 store = ConversationStore()
@@ -105,7 +132,7 @@ if "conversation" not in st.session_state or st.session_state.get("conv_provider
                 "source": prompt_choice if prompt_choice != "(none)" else None,
                 "text": system_prompt or "",
             },
-            "tools": {"local": [], "mcp": [], "builtin": []},
+            "tools": {"local": [t.name for t in active_tools], "mcp": [], "builtin": []},
             "mcp_servers_enabled": [],
         },
     )
@@ -141,31 +168,96 @@ if prompt := st.chat_input("Ask anything..."):
     })
     render_message(user_msg)
 
-    with st.chat_message("assistant", avatar="◐"):
-        client = get_client(provider, model)
-        events = client.stream_chat(
-            messages=messages,
-            system=system_prompt or None,
-            tools=[],
-            max_tokens=int(max_tokens),
-            temperature=float(temperature),
-        )
-        full_text, last = render_text_stream(events)
+    MAX_ITERS = 10
+    for _ in range(MAX_ITERS):
+        with st.chat_message("assistant", avatar="◐"):
+            text_box = st.empty()
+            text_buf: list[str] = []
 
-    asst_msg = ChatMessage(role="assistant", content=[TextBlock(type="text", text=full_text)])
-    messages.append(asst_msg)
-    save_msg = {
-        "role": "assistant",
-        "ts": _now_iso(),
-        "content": [{"type": "text", "text": full_text}],
-    }
-    if isinstance(last, MessageComplete):
-        save_msg["usage"] = {
-            "input_tokens": last.usage.input_tokens,
-            "output_tokens": last.usage.output_tokens,
-            "cache_read_tokens": last.usage.cache_read_tokens,
-        }
-    conv.append_message(save_msg)
+            def _on_text(t: str, _buf: list[str] = text_buf, _box: Any = text_box) -> None:
+                _buf.append(t)
+                _box.markdown("".join(_buf))
+
+            client = get_client(provider, model)
+            full_text, tool_calls, final = stream_assistant_turn(
+                lambda c=client: c.stream_chat(
+                    messages=messages,
+                    system=system_prompt or None,
+                    tools=active_tools,
+                    max_tokens=int(max_tokens),
+                    temperature=float(temperature),
+                ),
+                on_text=_on_text,
+            )
+
+            content_blocks: list = []
+            if full_text:
+                content_blocks.append(TextBlock(type="text", text=full_text))
+            for tc in tool_calls:
+                content_blocks.append(
+                    ToolUseBlock(
+                        type="tool_use", id=tc.id, name=tc.name, input=tc.input,
+                        source={"kind": "local"},
+                    )
+                )
+            asst_msg = ChatMessage(role="assistant", content=content_blocks)
+            messages.append(asst_msg)
+            save_msg = {
+                "role": "assistant",
+                "ts": _now_iso(),
+                "content": [
+                    ({"type": "text", "text": b.text} if isinstance(b, TextBlock)
+                     else {"type": "tool_use", "id": b.id, "name": b.name,
+                           "input": b.input, "source": b.source})
+                    for b in content_blocks
+                ],
+            }
+            if final:
+                save_msg["usage"] = {
+                    "input_tokens": final.usage.input_tokens,
+                    "output_tokens": final.usage.output_tokens,
+                    "cache_read_tokens": final.usage.cache_read_tokens,
+                }
+            conv.append_message(save_msg)
+
+            if not tool_calls:
+                break
+
+            tool_result_blocks = []
+            for tc in tool_calls:
+                t0 = time.time()
+                is_err = False
+                try:
+                    out = call_local_tool(tc.name, tc.input)
+                    out_text = out if isinstance(out, str) else json.dumps(out)
+                except Exception as e:
+                    out_text = f"{type(e).__name__}: {e}"
+                    is_err = True
+                duration_ms = int((time.time() - t0) * 1000)
+                render_tool_call_block(
+                    name=tc.name, source={"kind": "local"}, input=tc.input,
+                    result_text=out_text, duration_ms=duration_ms, is_error=is_err,
+                )
+                tool_result_blocks.append(
+                    ToolResultBlock(
+                        type="tool_result", tool_use_id=tc.id,
+                        content=[{"type": "text", "text": out_text}],
+                        is_error=is_err, duration_ms=duration_ms,
+                    )
+                )
+
+            tr_msg = ChatMessage(role="user", content=tool_result_blocks)
+            messages.append(tr_msg)
+            conv.append_message({
+                "role": "user",
+                "ts": _now_iso(),
+                "content": [
+                    {"type": "tool_result", "tool_use_id": b.tool_use_id,
+                     "content": b.content, "is_error": b.is_error,
+                     "duration_ms": b.duration_ms}
+                    for b in tool_result_blocks
+                ],
+            })
 
 
 render_theme_toggle()

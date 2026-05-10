@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+import json
+from collections.abc import Callable, Iterator
 from typing import Any
 
 import streamlit as st
 
 from playground.providers.base import (
     ChatMessage,
+    MessageComplete,
     StreamEvent,
     TextBlock,
     TextDelta,
+    ToolCallComplete,
     ToolResultBlock,
     ToolUseBlock,
 )
@@ -51,3 +54,52 @@ def render_text_stream(events: Iterator[StreamEvent]) -> tuple[str, Any]:
 
     st.write_stream(_gen())
     return "".join(text_buf), last_non_text
+
+
+def render_tool_call_block(
+    *,
+    name: str,
+    source: dict[str, str],
+    input: dict[str, Any],
+    result_text: str | None,
+    duration_ms: int | None,
+    is_error: bool,
+) -> None:
+    """Collapsible block showing a tool call's name, source, input, output."""
+    src_label = source.get("kind", "?")
+    if src_label == "mcp":
+        src_label = f"mcp/{source.get('server', '?')}"
+    head = f"⚙ {name} · {src_label}"
+    if duration_ms is not None:
+        head += f" · {duration_ms}ms"
+    if is_error:
+        head = "⚠ " + head
+    with st.expander(head, expanded=False):
+        st.markdown("**Input**")
+        st.code(json.dumps(input, indent=2, ensure_ascii=False), language="json")
+        if result_text is not None:
+            st.markdown("**Result**")
+            st.code(result_text, language="json")
+
+
+def stream_assistant_turn(
+    client_stream: Callable[[], Any],
+    *,
+    on_text: Callable[[str], None],
+) -> tuple[str, list[ToolCallComplete], MessageComplete | None]:
+    """Drive a single assistant streaming turn.
+
+    Returns (final_text, tool_calls, message_complete).
+    """
+    buf: list[str] = []
+    tool_calls: list[ToolCallComplete] = []
+    final: MessageComplete | None = None
+    for ev in client_stream():
+        if isinstance(ev, TextDelta):
+            buf.append(ev.text)
+            on_text(ev.text)
+        elif isinstance(ev, ToolCallComplete):
+            tool_calls.append(ev)
+        elif isinstance(ev, MessageComplete):
+            final = ev
+    return "".join(buf), tool_calls, final
