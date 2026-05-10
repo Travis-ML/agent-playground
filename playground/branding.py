@@ -119,10 +119,10 @@ def inject_brand_css() -> None:
             font-family: 'JetBrains Mono', monospace;
         }}
 
-        /* Restore Material Symbols icon font for icon-bearing spans.
-           Streamlit's icons use ligatures (e.g. "keyboard_double_arrow_left" resolves
-           to an arrow glyph). Our broad [class*="st-"] font-family rule was
-           overriding the icon font and breaking the ligatures. */
+        /* Restore Material Symbols icon font for icon-bearing elements.
+           Streamlit's icons use ligatures (e.g. "keyboard_double_arrow_left"
+           resolves to an arrow glyph). Our broad [class*="st-"] font-family rule
+           was overriding the icon font and breaking the ligatures. */
         .material-icons,
         .material-symbols-outlined,
         .material-symbols-rounded,
@@ -134,7 +134,15 @@ def inject_brand_css() -> None:
         [class*="material-symbol"],
         [class*="material-icon"],
         [data-testid="stIconMaterial"],
-        span[translate="no"] {{
+        span[translate="no"],
+        [data-testid="stSidebarCollapseButton"] span,
+        [data-testid="stSidebarCollapsedControl"] span,
+        [data-testid="collapsedControl"] span,
+        [aria-label*="Close sidebar"] span,
+        [aria-label*="Open sidebar"] span,
+        [aria-label*="collapse"] span,
+        [data-testid="stHeader"] [kind="header"] span,
+        [data-testid="stToolbar"] [kind="header"] span {{
           font-family: 'Material Symbols Outlined', 'Material Icons' !important;
           font-weight: normal !important;
           font-style: normal !important;
@@ -159,20 +167,20 @@ def inject_brand_css() -> None:
         }}
 
         .tml-label {{
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--text-300);
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 10px !important;
+            letter-spacing: 0.18em !important;
+            text-transform: uppercase !important;
+            color: var(--text-300) !important;
         }}
         .tml-label::before {{
-            content: '';
-            display: inline-block;
-            width: 5px;
-            height: 5px;
-            background: var(--accent);
-            margin-right: 8px;
-            vertical-align: 2px;
+            content: '' !important;
+            display: inline-block !important;
+            width: 5px !important;
+            height: 5px !important;
+            background: var(--accent) !important;
+            margin-right: 8px !important;
+            vertical-align: 2px !important;
         }}
 
         .block-container {{
@@ -380,16 +388,58 @@ def inject_brand_css() -> None:
           border-color: var(--line) !important;
         }}
 
-        /* General fallback for any element using Streamlit's default text color */
-        .stApp, .stApp p, .stApp span, .stApp div {{
-          color: inherit;
-        }}
-
         /* Alert / info / warning / error messages */
         [data-testid="stAlert"] {{
           background: var(--bg-deep) !important;
           color: var(--text-100) !important;
           border: 1px solid var(--line) !important;
+        }}
+
+        /* Raw JSON tree (st.json) — make it match dark/light theme */
+        [data-testid="stJson"],
+        [data-testid="stJson"] > div,
+        [data-testid="stJson"] pre,
+        .stJson,
+        .stJson > div,
+        .stJson pre {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border: 1px solid var(--line) !important;
+          border-radius: 0 !important;
+        }}
+        [data-testid="stJson"] *,
+        .stJson * {{
+          background: transparent !important;
+        }}
+        /* JSON syntax-highlighted spans (string, number, boolean, null, key) */
+        [data-testid="stJson"] .react-json-view,
+        [data-testid="stJson"] .object-key-val,
+        [data-testid="stJson"] .object-content,
+        [data-testid="stJson"] .icon-container,
+        [data-testid="stJson"] .copy-icon,
+        [data-testid="stJson"] .pretty-json-container {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+        }}
+        [data-testid="stJson"] .object-key,
+        [data-testid="stJson"] .variable-row {{
+          color: var(--text-200) !important;
+        }}
+        [data-testid="stJson"] .string-value {{
+          color: var(--accent-bright) !important;
+        }}
+        [data-testid="stJson"] .number-value {{
+          color: #C97A2A !important;
+        }}
+        [data-testid="stJson"] .boolean-value,
+        [data-testid="stJson"] .null-value {{
+          color: var(--text-300) !important;
+          font-style: italic;
+        }}
+        [data-testid="stJson"] .icon-container,
+        [data-testid="stJson"] .icon-container svg {{
+          color: var(--text-300) !important;
+          fill: var(--text-300) !important;
         }}
 
         /* Move wordmark above the auto-generated page nav */
