@@ -198,6 +198,71 @@ if "conversation" not in st.session_state or st.session_state.get("conv_provider
 conv = st.session_state.conversation
 messages: list[ChatMessage] = st.session_state.messages
 
+
+# ---------------- MCP prompts ----------------
+
+if mcp_servers and pool and enabled_servers:
+    try:
+        mcp_prompts = pool.list_prompts(enabled_servers)
+    except Exception as e:
+        st.sidebar.error(f"MCP list_prompts failed: {e}")
+        mcp_prompts = []
+
+    if mcp_prompts:
+        st.sidebar.markdown('<div class="tml-label">MCP prompts</div>', unsafe_allow_html=True)
+        prompt_options = {f"{p.server}/{p.name}": p for p in mcp_prompts}
+        sel = st.sidebar.selectbox(
+            "Prompt", list(prompt_options.keys()), key="_mcp_prompt_sel",
+        )
+        chosen = prompt_options[sel]
+        arg_values: dict = {}
+        for arg in chosen.arguments:
+            arg_values[arg["name"]] = st.sidebar.text_input(
+                f"  arg: {arg['name']}",
+                value=arg.get("default", ""),
+                help=arg.get("description"),
+                key=f"_mcp_prompt_arg_{arg['name']}",
+            )
+
+        col1, col2 = st.sidebar.columns(2)
+        if col1.button("Use as user message"):
+            try:
+                msgs = pool.get_prompt(chosen.server, chosen.name, arg_values)
+            except Exception as e:
+                st.sidebar.error(f"get_prompt failed: {e}")
+                msgs = []
+            for m in msgs:
+                st.session_state.messages.append(
+                    ChatMessage(
+                        role="user" if m["role"] == "user" else "assistant",
+                        content=[TextBlock(type="text", text=m["content"][0]["text"])],
+                    )
+                )
+                conv.append_message({**m, "ts": _now_iso()})
+                conv.add_event({
+                    "ts": _now_iso(),
+                    "type": "prompt_inserted",
+                    "server": chosen.server,
+                    "prompt": chosen.name,
+                    "args": arg_values,
+                })
+            st.rerun()
+        if col2.button("Use as system prompt"):
+            try:
+                msgs = pool.get_prompt(chosen.server, chosen.name, arg_values)
+            except Exception as e:
+                st.sidebar.error(f"get_prompt failed: {e}")
+                msgs = []
+            new_text = "\n\n".join(m["content"][0]["text"] for m in msgs)
+            st.session_state.system_prompt_text = new_text
+            conv.add_event({
+                "ts": _now_iso(),
+                "type": "system_prompt_replaced_by_mcp",
+                "server": chosen.server, "prompt": chosen.name, "args": arg_values,
+            })
+            st.rerun()
+
+
 # ---------------- Transcript ----------------
 
 st.markdown(
