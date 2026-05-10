@@ -1,8 +1,7 @@
 # Brainstorm session files (visual companion mockups, server logs)
 .superpowers/
 
-# Claude Code local state (worktrees, etc.) — config files like .claude/settings.json
-# can stay committed if you add them explicitly later
+# Claude Code local state
 .claude/
 
 # Secrets — never commit
@@ -15,9 +14,21 @@
 # Python cache
 __pycache__/
 *.py[cod]
+*.egg-info/
+build/
+dist/
 
-# Saved conversations (auto-saved per-run; opt in by removing this line)
+# Saved conversations (auto-saved per-run; remove this line to commit interesting fixtures)
 conversations/
+
+# Notes server data store
+.travisml-playground/
+
+# pytest
+.pytest_cache/
+
+# ruff
+.ruff_cache/
 
 # macOS
 .DS_Store
