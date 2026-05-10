@@ -61,7 +61,7 @@ render_brand_wordmark()
 
 # ---------------- Sidebar config ----------------
 
-st.sidebar.markdown('<div class="tml-label">Model</div>', unsafe_allow_html=True)
+st.sidebar.html('<div class="tml-label">Model</div>')
 
 providers_cfg = load_providers_config()
 available = list_available_providers(check_lmstudio=False)
@@ -79,7 +79,7 @@ model = st.sidebar.selectbox(
     key="model",
 )
 
-st.sidebar.markdown('<div class="tml-label">Sampling</div>', unsafe_allow_html=True)
+st.sidebar.html('<div class="tml-label">Sampling</div>')
 max_tokens = st.sidebar.number_input(
     "max_tokens", min_value=1, max_value=128_000,
     value=pcfg.default_max_tokens, key="max_tokens",
@@ -91,7 +91,7 @@ temperature = st.sidebar.slider(
 
 # ---------------- System prompt ----------------
 
-st.sidebar.markdown('<div class="tml-label">System prompt</div>', unsafe_allow_html=True)
+st.sidebar.html('<div class="tml-label">System prompt</div>')
 prompts_available = ["(none)"] + list_prompts()
 prompt_choice = st.sidebar.selectbox(
     "Load from library",
@@ -108,7 +108,7 @@ system_prompt = st.sidebar.text_area(
 
 # ---------------- Local tools ----------------
 
-st.sidebar.markdown('<div class="tml-label">Local tools</div>', unsafe_allow_html=True)
+st.sidebar.html('<div class="tml-label">Local tools</div>')
 local_tool_defs = get_local_tools()
 enabled_local: list[str] = st.sidebar.multiselect(
     "Enabled",
@@ -139,7 +139,7 @@ if mcp_servers:
     pool = st.session_state.get("mcp_pool")
 
     if pool:
-        st.sidebar.markdown('<div class="tml-label">MCP servers</div>', unsafe_allow_html=True)
+        st.sidebar.html('<div class="tml-label">MCP servers</div>')
         for name, cfg in mcp_servers.items():
             label = f"{name} — {cfg.description}" if cfg.description else name
             if st.sidebar.checkbox(label, value=cfg.enabled, key=f"_mcp_{name}"):
@@ -214,7 +214,7 @@ if mcp_servers and pool and enabled_servers:
         mcp_prompts = []
 
     if mcp_prompts:
-        st.sidebar.markdown('<div class="tml-label">MCP prompts</div>', unsafe_allow_html=True)
+        st.sidebar.html('<div class="tml-label">MCP prompts</div>')
         prompt_options = {f"{p.server}/{p.name}": p for p in mcp_prompts}
         sel = st.sidebar.selectbox(
             "Prompt", list(prompt_options.keys()), key="_mcp_prompt_sel",
@@ -279,7 +279,7 @@ if mcp_servers and pool and enabled_servers:
         resources = []
 
     if resources:
-        st.sidebar.markdown('<div class="tml-label">MCP resources</div>', unsafe_allow_html=True)
+        st.sidebar.html('<div class="tml-label">MCP resources</div>')
         for r in resources:
             uri_label = r.uri.split("/")[-1] or r.uri
             label = f"{r.server}/{uri_label}"
@@ -319,9 +319,8 @@ active_tools = active_tools + builtin_tools
 
 # ---------------- Transcript ----------------
 
-st.markdown(
-    '<h1 style="font-size:36px;margin-bottom:8px;">Basic <em>chat</em></h1>',
-    unsafe_allow_html=True,
+st.html(
+    '<h1 style="font-size:36px;margin-bottom:8px;">Basic <em>chat</em></h1>'
 )
 st.caption(f"Conversation `{conv.id}` · provider: `{provider}/{model}`")
 st.divider()
@@ -380,7 +379,7 @@ if prompt:
 
     MAX_ITERS = 10
     for _ in range(MAX_ITERS):
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="🌙"):
             text_box = st.empty()
             text_buf: list[str] = []
 
@@ -500,7 +499,7 @@ if prompt:
 
 # ---------------- History ----------------
 
-st.sidebar.markdown('<div class="tml-label">History</div>', unsafe_allow_html=True)
+st.sidebar.html('<div class="tml-label">History</div>')
 
 if st.sidebar.button("New conversation"):
     st.session_state.pop("conversation", None)

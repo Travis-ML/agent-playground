@@ -32,7 +32,7 @@ render_brand_wordmark()
 
 # --- Hero ---------------------------------------------------------------
 
-st.markdown(
+st.html(
     textwrap.dedent(
         """
         <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:36px;">
@@ -40,11 +40,10 @@ st.markdown(
           <span class="tml-label">Local · v0.1</span>
         </div>
         """
-    ).strip(),
-    unsafe_allow_html=True,
+    ).strip()
 )
 
-st.markdown(
+st.html(
     textwrap.dedent(
         """
         <h1 style="font-size:clamp(40px,7vw,82px);line-height:0.95;
@@ -52,11 +51,10 @@ st.markdown(
           Build, test, debug <em>agents</em>
         </h1>
         """
-    ).strip(),
-    unsafe_allow_html=True,
+    ).strip()
 )
 
-st.markdown(
+st.html(
     textwrap.dedent(
         """
         <div style="border-top:1px solid var(--line);padding-top:24px;
@@ -69,14 +67,13 @@ st.markdown(
           providers.
         </div>
         """
-    ).strip(),
-    unsafe_allow_html=True,
+    ).strip()
 )
 
 
 # --- Provider status grid ----------------------------------------------
 
-st.markdown('<div class="tml-label">Providers</div>', unsafe_allow_html=True)
+st.html('<div class="tml-label">Providers</div>')
 
 
 def _status_card(title: str, model_summary: str, connected: bool) -> str:
@@ -110,19 +107,16 @@ lmstudio_url = html.escape(os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234
 
 cols = st.columns(3, gap="medium")
 with cols[0]:
-    st.markdown(
-        _status_card("Anthropic / Claude", "opus-4-7, sonnet-4-6, haiku-4-5", anthropic_ok),
-        unsafe_allow_html=True,
+    st.html(
+        _status_card("Anthropic / Claude", "opus-4-7, sonnet-4-6, haiku-4-5", anthropic_ok)
     )
 with cols[1]:
-    st.markdown(
-        _status_card("OpenAI / GPT", "gpt-4o, gpt-4o-mini, o1", openai_ok),
-        unsafe_allow_html=True,
+    st.html(
+        _status_card("OpenAI / GPT", "gpt-4o, gpt-4o-mini, o1", openai_ok)
     )
 with cols[2]:
-    st.markdown(
-        _status_card("LM Studio / Local", lmstudio_url, False),
-        unsafe_allow_html=True,
+    st.html(
+        _status_card("LM Studio / Local", lmstudio_url, False)
     )
 
 st.write("")
@@ -132,7 +126,7 @@ st.write("")
 # --- MCP servers list ---------------------------------------------------
 
 mcp_path = Path("mcp.json")
-st.markdown('<div class="tml-label">MCP servers</div>', unsafe_allow_html=True)
+st.html('<div class="tml-label">MCP servers</div>')
 
 if mcp_path.exists():
     st.caption(f"Configured in `{mcp_path}`. Toggle them per-page in Basic Chat.")

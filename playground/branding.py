@@ -143,10 +143,22 @@ def inject_brand_css() -> None:
             padding-top: 2rem;
             max-width: 1100px;
         }}
+
+        /* Move wordmark above the auto-generated page nav */
+        section[data-testid="stSidebar"] > div:first-child > div:first-child {{
+          display: flex;
+          flex-direction: column;
+        }}
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {{
+          order: 2;
+        }}
+        section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{
+          order: 1;
+        }}
         </style>
         """
     ).strip()
-    st.markdown(css, unsafe_allow_html=True)
+    st.html(css)
 
 
 def render_brand_wordmark() -> None:
@@ -162,7 +174,7 @@ def render_brand_wordmark() -> None:
         <div class="tml-label" style="margin-bottom:24px;">Agent harness · v0.1</div>
         """
     ).strip()
-    st.sidebar.markdown(html, unsafe_allow_html=True)
+    st.sidebar.html(html)
 
 
 def render_theme_toggle() -> None:

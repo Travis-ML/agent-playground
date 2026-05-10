@@ -22,7 +22,8 @@ from playground.providers.base import (
 
 def render_message(msg: ChatMessage) -> None:
     """Render a finalized assistant or user message in the transcript."""
-    with st.chat_message(msg.role):
+    avatar = "🧑" if msg.role == "user" else "🌙"
+    with st.chat_message(msg.role, avatar=avatar):
         for block in msg.content:
             if isinstance(block, TextBlock):
                 if block.text:
@@ -68,11 +69,11 @@ def render_tool_call_block(
     src_label = source.get("kind", "?")
     if src_label == "mcp":
         src_label = f"mcp/{source.get('server', '?')}"
-    head = f"⚙ {name} · {src_label}"
+    head = f"tool · {name} · {src_label}"
     if duration_ms is not None:
         head += f" · {duration_ms}ms"
     if is_error:
-        head = "⚠ " + head
+        head = "ERROR · " + head
     with st.expander(head, expanded=False):
         st.markdown("**Input**")
         st.code(json.dumps(input, indent=2, ensure_ascii=False), language="json")
