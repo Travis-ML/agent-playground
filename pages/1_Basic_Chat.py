@@ -334,8 +334,34 @@ raw_view = st.sidebar.toggle("Raw JSON", value=False, key="raw_json_view",
 if raw_view:
     st.json(conv.data, expanded=True)
 else:
-    for m in messages:
+    loaded_id = st.session_state.get("loaded_conv_id")
+    for i, m in enumerate(messages):
         render_message(m)
+        if st.session_state.get("read_only") and loaded_id:
+            # Per-message fork affordance
+            cols = st.columns([2, 8])
+            with cols[0]:
+                if st.button(
+                    "⤴ Fork from here",
+                    key=f"fork_msg_{loaded_id}_{i}",
+                    help=(
+                        "Start a new conversation seeded with messages "
+                        "up to and including this one"
+                    ),
+                    use_container_width=True,
+                ):
+                    loaded = store.load(loaded_id)
+                    forked = store.new("basic_chat", config=loaded.data["config"])
+                    sliced = loaded.data["messages"][: i + 1]
+                    for fm in sliced:
+                        forked.append_message(fm)
+                    st.session_state.conversation = forked
+                    st.session_state.messages = data_to_chat_messages(
+                        {"messages": sliced}
+                    )
+                    st.session_state.read_only = False
+                    st.session_state.loaded_conv_id = None
+                    st.rerun()
 
 
 # ---------------- Input + send ----------------
@@ -530,7 +556,7 @@ for s in summaries[:20]:
 
 if st.session_state.get("read_only"):
     st.sidebar.warning("Viewing past conversation (read-only)")
-    if st.sidebar.button("Fork from here"):
+    if st.sidebar.button("Fork (full conversation)"):
         loaded_id = st.session_state.get("loaded_conv_id")
         if loaded_id:
             loaded = store.load(loaded_id)
