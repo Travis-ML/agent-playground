@@ -72,3 +72,50 @@ def test_anthropic_client_basic_stream(
     assert len(completes) == 1
     assert completes[0].usage.output_tokens == 7
     assert completes[0].stop_reason == "end_turn"
+
+
+# ---------------- OpenAI ----------------
+
+def test_openai_client_basic_stream(fixtures_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from playground.providers import openai_client as oc
+
+    events = []
+    with (fixtures_dir / "openai_basic_response.jsonl").open() as f:
+        for line in f:
+            if line.strip():
+                events.append(json.loads(line))
+
+    class _FakeStream:
+        def __init__(self, evs):
+            self._evs = [type("Chunk", (), {"model_dump": lambda self, e=e: e})() for e in evs]
+        def __iter__(self): return iter(self._evs)
+
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            return _FakeStream(events)
+
+    class _FakeChat:
+        def __init__(self): self.completions = _FakeCompletions()
+
+    class _FakeOpenAI:
+        def __init__(self, **kwargs): self.chat = _FakeChat()
+
+    monkeypatch.setattr(oc, "OpenAI", _FakeOpenAI)
+
+    client = oc.OpenAIClient(model="gpt-4o", api_key="test")
+    out = list(
+        client.stream_chat(
+            messages=[ChatMessage(role="user", content=[TextBlock(type="text", text="hi")])],
+            system=None,
+            tools=[],
+            max_tokens=100,
+            temperature=1.0,
+        )
+    )
+
+    deltas = [e for e in out if isinstance(e, TextDelta)]
+    completes = [e for e in out if isinstance(e, MessageComplete)]
+    assert "".join(d.text for d in deltas) == "Hello there"
+    assert len(completes) == 1
+    assert completes[0].usage.output_tokens == 7
+    assert completes[0].stop_reason == "stop"
