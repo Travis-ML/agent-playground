@@ -103,3 +103,26 @@ def stream_assistant_turn(
         elif isinstance(ev, MessageComplete):
             final = ev
     return "".join(buf), tool_calls, final
+
+
+def data_to_chat_messages(conv_data: dict) -> list[ChatMessage]:
+    """Reconstruct ChatMessage list from a persisted conversation dict."""
+    out: list[ChatMessage] = []
+    for m in conv_data.get("messages", []):
+        blocks: list = []
+        for b in m.get("content", []):
+            if b.get("type") == "text":
+                blocks.append(TextBlock(type="text", text=b["text"]))
+            elif b.get("type") == "tool_use":
+                blocks.append(ToolUseBlock(
+                    type="tool_use", id=b["id"], name=b["name"],
+                    input=b.get("input", {}), source=b.get("source", {}),
+                ))
+            elif b.get("type") == "tool_result":
+                blocks.append(ToolResultBlock(
+                    type="tool_result", tool_use_id=b["tool_use_id"],
+                    content=b.get("content", []), is_error=b.get("is_error", False),
+                    duration_ms=b.get("duration_ms"),
+                ))
+        out.append(ChatMessage(role=m["role"], content=blocks))
+    return out

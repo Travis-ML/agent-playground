@@ -17,6 +17,7 @@ from playground.branding import (
     render_theme_toggle,
 )
 from playground.chat_ui import (
+    data_to_chat_messages,
     render_message,
     render_tool_call_block,
     stream_assistant_turn,
@@ -331,7 +332,11 @@ for m in messages:
 
 # ---------------- Input + send ----------------
 
-if prompt := st.chat_input("Ask anything..."):
+prompt = (
+    None if st.session_state.get("read_only")
+    else st.chat_input("Ask anything...")
+)
+if prompt:
     preamble_blocks: list = []
     for ar in attached_resources:
         try:
@@ -491,6 +496,46 @@ if prompt := st.chat_input("Ask anything..."):
                     for b in tool_result_blocks
                 ],
             })
+
+
+# ---------------- History ----------------
+
+st.sidebar.markdown('<div class="tml-label">History</div>', unsafe_allow_html=True)
+
+if st.sidebar.button("New conversation"):
+    st.session_state.pop("conversation", None)
+    st.session_state.pop("messages", None)
+    st.session_state.pop("loaded_conv_id", None)
+    st.session_state.pop("read_only", None)
+    st.rerun()
+
+summaries = store.list("basic_chat")
+loaded = None
+for s in summaries[:20]:
+    label = f"{s.started_at:%H:%M}  {(s.first_user_message[:36] or '(empty)')}"
+    if st.sidebar.button(label, key=f"_hist_{s.id}", use_container_width=True):
+        loaded = store.load(s.id)
+        st.session_state.messages = data_to_chat_messages(loaded.data)
+        st.session_state.loaded_conv_id = s.id
+        st.session_state.read_only = True
+        st.rerun()
+
+if st.session_state.get("read_only"):
+    st.sidebar.warning("Viewing past conversation (read-only)")
+    if st.sidebar.button("Fork from here"):
+        loaded_id = st.session_state.get("loaded_conv_id")
+        if loaded_id:
+            loaded = store.load(loaded_id)
+            forked = store.new(
+                "basic_chat",
+                config=loaded.data["config"],
+            )
+            for m in loaded.data["messages"]:
+                forked.append_message(m)
+            st.session_state.conversation = forked
+            st.session_state.read_only = False
+            st.session_state.loaded_conv_id = None
+            st.rerun()
 
 
 render_theme_toggle()
