@@ -144,6 +144,194 @@ def inject_brand_css() -> None:
             max-width: 1100px;
         }}
 
+        /* Streamlit chrome uses high-specificity emotion-css classes; !important
+           is required to override them so the theme actually flips on toggle. */
+
+        /* ========== Comprehensive Streamlit chrome theming ========== */
+
+        /* Top header / toolbar (where Deploy button + main menu live) */
+        [data-testid="stHeader"],
+        [data-testid="stToolbar"] {{
+          background: var(--bg-void) !important;
+          color: var(--text-100) !important;
+        }}
+        [data-testid="stHeader"] button,
+        [data-testid="stToolbar"] button,
+        [data-testid="stHeader"] svg,
+        [data-testid="stToolbar"] svg {{
+          color: var(--text-100) !important;
+          fill: var(--text-100) !important;
+        }}
+        [data-testid="stHeader"] button:hover,
+        [data-testid="stToolbar"] button:hover {{
+          background: var(--bg-elevated) !important;
+        }}
+
+        /* Bottom area where chat input lives */
+        [data-testid="stBottomBlockContainer"],
+        .stBottom {{
+          background: var(--bg-void) !important;
+        }}
+
+        /* Chat input field itself */
+        [data-testid="stChatInput"],
+        [data-testid="stChatInputContainer"] {{
+          background: var(--bg-deep) !important;
+          border-color: var(--line) !important;
+        }}
+        [data-testid="stChatInput"] textarea,
+        [data-testid="stChatInput"] input {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+        }}
+        [data-testid="stChatInput"] textarea::placeholder {{
+          color: var(--text-400) !important;
+        }}
+
+        /* Sidebar page nav links (app, Basic Chat, etc.) */
+        [data-testid="stSidebarNav"] a {{
+          color: var(--text-200) !important;
+        }}
+        [data-testid="stSidebarNav"] a:hover {{
+          color: var(--text-100) !important;
+          background: var(--bg-elevated) !important;
+        }}
+        [data-testid="stSidebarNav"] a span {{
+          color: inherit !important;
+        }}
+        [data-testid="stSidebarNav"] [aria-current="page"] {{
+          background: var(--bg-elevated) !important;
+        }}
+        [data-testid="stSidebarNav"] [aria-current="page"] a {{
+          color: var(--text-100) !important;
+        }}
+
+        /* Widget labels (selectbox, slider, text inputs, etc.) */
+        .stSelectbox label,
+        .stTextArea label,
+        .stTextInput label,
+        .stNumberInput label,
+        .stSlider label,
+        .stMultiSelect label,
+        .stCheckbox label,
+        .stRadio label,
+        .stToggle label,
+        [data-testid="stWidgetLabel"],
+        [data-testid="stWidgetLabel"] label,
+        [data-testid="stWidgetLabel"] p {{
+          color: var(--text-200) !important;
+        }}
+
+        /* Form widget bodies */
+        .stSelectbox [data-baseweb="select"] > div,
+        .stMultiSelect [data-baseweb="select"] > div {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border-color: var(--line-strong) !important;
+        }}
+        .stTextInput input,
+        .stTextArea textarea,
+        .stNumberInput input {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border-color: var(--line-strong) !important;
+        }}
+        .stSlider [data-baseweb="slider"] [role="slider"] {{
+          background: var(--accent) !important;
+        }}
+
+        /* Selectbox dropdown popover */
+        [data-baseweb="popover"] [data-baseweb="menu"] {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border-color: var(--line-strong) !important;
+        }}
+        [data-baseweb="popover"] [role="option"] {{
+          color: var(--text-200) !important;
+        }}
+        [data-baseweb="popover"] [role="option"]:hover {{
+          background: var(--bg-elevated) !important;
+          color: var(--text-100) !important;
+        }}
+
+        /* Chat message bodies */
+        [data-testid="stChatMessage"] {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border: 1px solid var(--line);
+        }}
+        [data-testid="stChatMessage"] p,
+        [data-testid="stChatMessage"] li,
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"],
+        [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] * {{
+          color: var(--text-100) !important;
+        }}
+
+        /* Captions / small text */
+        [data-testid="stCaptionContainer"],
+        .stCaption,
+        small {{
+          color: var(--text-300) !important;
+        }}
+
+        /* Buttons (default Streamlit buttons) */
+        .stButton button,
+        [data-testid="stBaseButton-secondary"],
+        [data-testid="stBaseButton-primary"] {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border: 1px solid var(--line-strong) !important;
+        }}
+        .stButton button:hover {{
+          background: var(--bg-elevated) !important;
+          border-color: var(--accent) !important;
+          color: var(--text-100) !important;
+        }}
+
+        /* Expanders (used by tool-call rendering) */
+        [data-testid="stExpander"] {{
+          background: var(--bg-deep) !important;
+          border: 1px solid var(--line) !important;
+        }}
+        [data-testid="stExpander"] summary,
+        [data-testid="stExpander"] details summary {{
+          color: var(--text-200) !important;
+        }}
+        [data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {{
+          color: var(--text-100) !important;
+        }}
+
+        /* Code blocks (used in tool-call expanders) */
+        .stCodeBlock,
+        .stCodeBlock pre,
+        .stCodeBlock code {{
+          background: var(--bg-elevated) !important;
+          color: var(--text-100) !important;
+        }}
+
+        /* Toggle widget (theme switch itself) */
+        .stToggle [data-baseweb="checkbox"] div {{
+          color: var(--text-200) !important;
+        }}
+
+        /* Dividers */
+        hr,
+        [data-testid="stDivider"] {{
+          border-color: var(--line) !important;
+        }}
+
+        /* General fallback for any element using Streamlit's default text color */
+        .stApp, .stApp p, .stApp span, .stApp div {{
+          color: inherit;
+        }}
+
+        /* Alert / info / warning / error messages */
+        [data-testid="stAlert"] {{
+          background: var(--bg-deep) !important;
+          color: var(--text-100) !important;
+          border: 1px solid var(--line) !important;
+        }}
+
         /* Move wordmark above the auto-generated page nav */
         section[data-testid="stSidebar"] > div:first-child > div:first-child {{
           display: flex;
