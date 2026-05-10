@@ -1,0 +1,23 @@
+# Brainstorm session files (visual companion mockups, server logs)
+.superpowers/
+
+# Claude Code local state (worktrees, etc.) — config files like .claude/settings.json
+# can stay committed if you add them explicitly later
+.claude/
+
+# Secrets — never commit
+.env
+
+# Python venv
+.agent-playground/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Saved conversations (auto-saved per-run; opt in by removing this line)
+conversations/
+
+# macOS
+.DS_Store
