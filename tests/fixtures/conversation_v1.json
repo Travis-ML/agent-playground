@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "2026-05-09T22-30-15-a3f7",
+  "page": "basic_chat",
+  "started_at": "2026-05-09T22:30:15Z",
+  "ended_at": "2026-05-09T22:34:02Z",
+  "config": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "max_tokens": 4096,
+    "temperature": 1.0,
+    "system_prompt": {"source": "library/default.md", "text": "You are a helpful assistant."},
+    "tools": {"local": [], "mcp": [], "builtin": []},
+    "mcp_servers_enabled": []
+  },
+  "messages": [
+    {
+      "role": "user",
+      "ts": "2026-05-09T22:30:18Z",
+      "content": [{"type": "text", "text": "Hello"}]
+    },
+    {
+      "role": "assistant",
+      "ts": "2026-05-09T22:30:21Z",
+      "content": [{"type": "text", "text": "Hi there"}],
+      "usage": {"input_tokens": 10, "output_tokens": 3, "cache_read_tokens": 0}
+    }
+  ],
+  "events": []
+}
