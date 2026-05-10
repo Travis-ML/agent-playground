@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "notes": {
+      "command": "python",
+      "args": ["mcp_servers/notes/server.py"],
+      "description": "Bundled — agent scratch notes, persists to disk",
+      "enabled": false
+    }
+  }
+}
