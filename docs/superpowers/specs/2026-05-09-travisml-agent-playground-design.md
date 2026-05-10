@@ -35,8 +35,8 @@ are designed-for but not built; each will be its own brainstorm and spec.
 - Anthropic-specific features that aren't on Basic Chat (prompt caching,
   Claude "dreaming"/agent skills, the native MCP API parameter). These belong
   on dedicated pages built later.
-- Comprehensive test suite. Focused tests around the persistence schema and
-  MCP bridge if either gets hairy.
+- Exhaustive test coverage of UI components (Streamlit widgets are tested
+  by Streamlit). Focused tests on logic-heavy code are *in scope* — see §10.
 
 ## 2. Tech stack
 
@@ -99,6 +99,14 @@ agent-playground/
 ├── conversations/                # Auto-saved JSON, gitignored
 │   └── basic_chat/
 │       └── 2026-05-09T22-30-15-a3f7.json
+│
+├── tests/                        # Pytest suite (logic-heavy code only)
+│   ├── conftest.py               # Shared fixtures, mock provider responses
+│   ├── test_persistence.py       # Conversation save/load round-trip, schema
+│   ├── test_mcp_bridge.py        # MCP tool schema → provider format
+│   ├── test_tools_registry.py    # @register_tool, schema inference
+│   ├── test_providers.py         # Each LLMClient against mocked HTTP responses
+│   └── fixtures/                 # Captured JSON conversations, recorded API responses
 │
 └── docs/
     └── superpowers/specs/        # This file lives here
@@ -571,29 +579,85 @@ The MVP page — exercises every system in the harness.
   "Fork from here" button that creates a new conversation pre-seeded with
   the loaded transcript.
 
-## 10. Build order
+## 10. Testing
 
-Each step ends with something runnable.
+Two complementary surfaces — neither aims for 100% coverage; both aim to
+catch regressions in the parts that actually break things.
+
+### 10.1 Programmatic — pytest suite under `tests/`
+
+Focused tests on logic-heavy code paths. Streamlit widgets are out of scope
+(they're tested by Streamlit; trying to test our usage of them is brittle).
+Target areas:
+
+- **Persistence** (`test_persistence.py`) — `Conversation` round-trip
+  save/load, schema validation, atomic-write behavior, `ConversationStore.list()`
+  summary parsing.
+- **MCP bridge** (`test_mcp_bridge.py`) — translation of MCP tool schemas to
+  Anthropic and OpenAI tool formats; tool-call dispatch routing
+  (local vs MCP vs builtin).
+- **Tool registry** (`test_tools_registry.py`) — `@register_tool` schema
+  inference from function signatures + docstrings.
+- **Provider clients** (`test_providers.py`) — each `LLMClient`
+  implementation against recorded HTTP responses (using `respx` or similar).
+  Verify `StreamEvent` normalization across the three providers.
+
+Run with `pytest`. CI not required for v1, but the suite is structured so
+adding GitHub Actions is a single workflow file later.
+
+### 10.2 Programmatic — smoke-test CLI
+
+A tiny CLI that runs a turn end-to-end without Streamlit:
+
+```bash
+python -m playground.smoke --provider anthropic --model claude-sonnet-4-6 \
+    --prompt "Hello, can you list the notes?" --mcp-server notes
+```
+
+Use it to:
+- Verify the foundation works without launching the GUI
+- Quickly test new tools or MCP servers
+- Reproduce conversation bugs from a saved JSON
+
+### 10.3 Manual — interactive exploratory testing
+
+The GUI itself is the primary manual test surface. Each build-order step
+ends with a small "smoke checklist" — concrete things to verify by hand
+(see §11). Saved conversation JSON files double as manual-test fixtures:
+when something looks wrong, the conversation is replayable.
+
+## 11. Build order
+
+Each step ends with something runnable. Tests are added alongside the code
+they cover, not at the end as a separate phase.
 
 1. **Skeleton** — `pyproject.toml`, deps, `.env.example`, `.gitignore`,
    `.streamlit/config.toml`, providers/MCP config loaders, `app.py` with
-   brand wordmark + theme toggle.
+   brand wordmark + theme toggle, `tests/` directory + `conftest.py`.
+   Smoke check: `streamlit run app.py` shows the home page.
 2. **Multi-provider chat** — `LLMClient` protocol + Anthropic / OpenAI /
    LMStudio implementations, provider+model dropdown, bare streaming chat
-   (no tools), saves JSON.
+   (no tools), saves JSON. **Tests:** `test_providers.py` with recorded
+   HTTP responses; `test_persistence.py` save/load round-trip.
+   Smoke check: `python -m playground.smoke --provider anthropic --prompt hi`
+   returns a streamed response.
 3. **System prompt editor + library** — sidebar textarea + dropdown reading
-   `prompts/library/`.
+   `prompts/library/`. Smoke check: switching prompts updates next request.
 4. **Local tools** — `@register_tool`, two examples, collapsible tool-call
-   rendering.
+   rendering. **Tests:** `test_tools_registry.py` schema inference.
+   Smoke check: agent calls `get_current_time`, result rendered inline.
 5. **MCP tools** — client pool, `mcp.json` loader, bundled `notes` server,
-   sidebar checkboxes per server.
+   sidebar checkboxes per server. **Tests:** `test_mcp_bridge.py` schema
+   translation. Smoke check: agent saves and lists notes via MCP.
 6. **MCP prompts** — sidebar dropdown + insertion as user/system message.
 7. **MCP resources** — sidebar list + attach + `read_mcp_resource` builtin.
 8. **History sidebar** — list past conversations, load read-only, fork.
-9. **Polish** — README, example tool comments, `mcp.json` comments,
-   screenshots in README.
+   Smoke check: re-open a conversation from step 2; "Fork from here" works.
+9. **Polish** — README (install + first-run + add-a-tool walkthrough),
+   example tool comments, `mcp.json` comments, README screenshots, run full
+   pytest suite green.
 
-## 11. Out of scope (explicit, deferred to later versions)
+## 12. Out of scope (explicit, deferred to later versions)
 
 - Additional pages (Tool Workshop, Multi-Agent, Memory Studio, Prompt
   Evals) — each will be its own brainstorm + spec.
@@ -606,10 +670,10 @@ Each step ends with something runnable.
 - SQLite storage / conversation index file — direct file scan until pain.
 - Theme persistence across browser sessions — session-only is fine for v1.
 - Auth, multi-user, hosted deployment — local `streamlit run` only.
-- Comprehensive test suite. Add focused tests around persistence schema and
-  MCP bridge if either gets hairy.
+- Streamlit-widget tests, end-to-end browser tests, CI pipeline. Focused
+  pytest suite + smoke-test CLI are in scope (see §10).
 
-## 12. Open questions / things to revisit after first use
+## 13. Open questions / things to revisit after first use
 
 - **Tool-call iteration cap (default 10)** — may need tuning once real
   agents are running. Should it be a sidebar slider per page?
