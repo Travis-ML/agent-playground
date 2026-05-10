@@ -60,6 +60,11 @@ _FONTS_HREF = (
     "family=Sora:wght@300;400;500&display=swap"
 )
 
+_ICONS_HREF = (
+    "https://fonts.googleapis.com/css2?"
+    "family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+)
+
 
 def get_theme() -> Palette:
     """Return the active palette; defaults to light."""
@@ -76,6 +81,7 @@ def inject_brand_css() -> None:
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="{_FONTS_HREF}" rel="stylesheet">
+        <link href="{_ICONS_HREF}" rel="stylesheet">
         <style>
         :root {{
             --bg-void: {t['bg_void']};
@@ -111,6 +117,36 @@ def inject_brand_css() -> None:
 
         code, pre, .stCodeBlock {{
             font-family: 'JetBrains Mono', monospace;
+        }}
+
+        /* Restore Material Symbols icon font for icon-bearing spans.
+           Streamlit's icons use ligatures (e.g. "keyboard_double_arrow_left" resolves
+           to an arrow glyph). Our broad [class*="st-"] font-family rule was
+           overriding the icon font and breaking the ligatures. */
+        .material-icons,
+        .material-symbols-outlined,
+        .material-symbols-rounded,
+        .material-symbols-sharp,
+        .material-icons-outlined,
+        .material-icons-round,
+        .material-icons-sharp,
+        .material-icons-two-tone,
+        [class*="material-symbol"],
+        [class*="material-icon"],
+        [data-testid="stIconMaterial"],
+        span[translate="no"] {{
+          font-family: 'Material Symbols Outlined', 'Material Icons' !important;
+          font-weight: normal !important;
+          font-style: normal !important;
+          font-feature-settings: 'liga' !important;
+          text-transform: none !important;
+          letter-spacing: normal !important;
+          word-wrap: normal !important;
+          white-space: nowrap !important;
+          direction: ltr !important;
+          -webkit-font-smoothing: antialiased !important;
+          font-size: 24px !important;
+          line-height: 1 !important;
         }}
 
         .stApp {{
@@ -169,23 +205,47 @@ def inject_brand_css() -> None:
 
         /* Bottom area where chat input lives */
         [data-testid="stBottomBlockContainer"],
-        .stBottom {{
+        [data-testid="stBottom"],
+        .stBottom,
+        .stBottom > div,
+        [data-testid="stBottomBlockContainer"] > div {{
           background: var(--bg-void) !important;
+          border-top: 1px solid var(--line) !important;
         }}
 
-        /* Chat input field itself */
+        /* Chat input field — multiple nested wrappers */
         [data-testid="stChatInput"],
-        [data-testid="stChatInputContainer"] {{
+        [data-testid="stChatInputContainer"],
+        [data-testid="stChatInput"] > div,
+        [data-testid="stChatInput"] > div > div,
+        .stChatInput,
+        .stChatInput > div {{
           background: var(--bg-deep) !important;
-          border-color: var(--line) !important;
+          border-color: var(--line-strong) !important;
+          box-shadow: none !important;
         }}
+
+        /* Chat input textarea / inner editable area */
         [data-testid="stChatInput"] textarea,
-        [data-testid="stChatInput"] input {{
+        [data-testid="stChatInput"] input,
+        [data-testid="stChatInput"] [contenteditable] {{
           background: var(--bg-deep) !important;
           color: var(--text-100) !important;
+          border-color: transparent !important;
         }}
-        [data-testid="stChatInput"] textarea::placeholder {{
+        [data-testid="stChatInput"] textarea::placeholder,
+        [data-testid="stChatInput"] [contenteditable][placeholder]::before {{
           color: var(--text-400) !important;
+        }}
+
+        /* Chat input send button */
+        [data-testid="stChatInput"] button {{
+          background: var(--bg-elevated) !important;
+          color: var(--text-100) !important;
+        }}
+        [data-testid="stChatInput"] button:hover {{
+          background: var(--accent-bright) !important;
+          color: var(--bg-void) !important;
         }}
 
         /* Sidebar page nav links (app, Basic Chat, etc.) */

@@ -325,14 +325,23 @@ st.html(
 st.caption(f"Conversation `{conv.id}` · provider: `{provider}/{model}`")
 st.divider()
 
-for m in messages:
-    render_message(m)
+# ---------------- View ----------------
+
+st.sidebar.html('<div class="tml-label">View</div>')
+raw_view = st.sidebar.toggle("Raw JSON", value=False, key="raw_json_view",
+                              help="Show the full saved conversation as JSON.")
+
+if raw_view:
+    st.json(conv.data, expanded=True)
+else:
+    for m in messages:
+        render_message(m)
 
 
 # ---------------- Input + send ----------------
 
 prompt = (
-    None if st.session_state.get("read_only")
+    None if (raw_view or st.session_state.get("read_only"))
     else st.chat_input("Ask anything...")
 )
 if prompt:
