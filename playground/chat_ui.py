@@ -22,8 +22,7 @@ from playground.providers.base import (
 
 def render_message(msg: ChatMessage) -> None:
     """Render a finalized assistant or user message in the transcript."""
-    avatar = "🧑" if msg.role == "user" else "◐"
-    with st.chat_message(msg.role, avatar=avatar):
+    with st.chat_message(msg.role):
         for block in msg.content:
             if isinstance(block, TextBlock):
                 if block.text:

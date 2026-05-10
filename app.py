@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import os
+import textwrap
 from pathlib import Path
 
 import streamlit as st
@@ -32,37 +33,43 @@ render_brand_wordmark()
 # --- Hero ---------------------------------------------------------------
 
 st.markdown(
-    """
-    <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:36px;">
-      <span class="tml-label">Edition / 001</span>
-      <span class="tml-label">Local · v0.1</span>
-    </div>
-    """,
+    textwrap.dedent(
+        """
+        <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:36px;">
+          <span class="tml-label">Edition / 001</span>
+          <span class="tml-label">Local · v0.1</span>
+        </div>
+        """
+    ).strip(),
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    """
-    <h1 style="font-size:clamp(40px,7vw,82px);line-height:0.95;
-               letter-spacing:-0.035em;max-width:14ch;margin-bottom:28px;">
-      Build, test, debug <em>agents</em>
-    </h1>
-    """,
+    textwrap.dedent(
+        """
+        <h1 style="font-size:clamp(40px,7vw,82px);line-height:0.95;
+                   letter-spacing:-0.035em;max-width:14ch;margin-bottom:28px;">
+          Build, test, debug <em>agents</em>
+        </h1>
+        """
+    ).strip(),
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    """
-    <div style="border-top:1px solid var(--line);padding-top:24px;
-                font-size:17px;color:var(--text-200);max-width:60ch;
-                line-height:1.6;margin-bottom:48px;">
-      <strong style="color:var(--text-100);font-weight:500;">
-        TravisML Agent Playground
-      </strong> is a branded harness for experimenting with agentic systems —
-      chat, tools, memory, prompts, and MCP servers — across multiple model
-      providers.
-    </div>
-    """,
+    textwrap.dedent(
+        """
+        <div style="border-top:1px solid var(--line);padding-top:24px;
+                    font-size:17px;color:var(--text-200);max-width:60ch;
+                    line-height:1.6;margin-bottom:48px;">
+          <strong style="color:var(--text-100);font-weight:500;">
+            TravisML Agent Playground
+          </strong> is a branded harness for experimenting with agentic systems —
+          chat, tools, memory, prompts, and MCP servers — across multiple model
+          providers.
+        </div>
+        """
+    ).strip(),
     unsafe_allow_html=True,
 )
 
@@ -75,24 +82,26 @@ st.markdown('<div class="tml-label">Providers</div>', unsafe_allow_html=True)
 def _status_card(title: str, model_summary: str, connected: bool) -> str:
     accent = "var(--accent)" if connected else "#C97A2A"
     label = "Connected" if connected else "Awaiting setup"
-    return f"""
-    <div style="background:var(--bg-deep);border:1px solid var(--line);
-                padding:22px;height:100%;">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;
-                  letter-spacing:0.16em;text-transform:uppercase;
-                  color:{accent};display:flex;align-items:center;gap:8px;
-                  margin-bottom:8px;">
-        <span style="display:inline-block;width:5px;height:5px;
-                     background:{accent};"></span>{label}
-      </div>
-      <div style="font-family:'Fraunces',serif;font-weight:600;font-size:18px;
-                  color:var(--text-100);letter-spacing:-0.01em;
-                  margin-bottom:6px;">{title}</div>
-      <div style="font-size:13px;color:var(--text-300);line-height:1.55;">
-        {model_summary}
-      </div>
-    </div>
-    """
+    return textwrap.dedent(
+        f"""
+        <div style="background:var(--bg-deep);border:1px solid var(--line);
+                    padding:22px;height:100%;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;
+                      letter-spacing:0.16em;text-transform:uppercase;
+                      color:{accent};display:flex;align-items:center;gap:8px;
+                      margin-bottom:8px;">
+            <span style="display:inline-block;width:5px;height:5px;
+                         background:{accent};"></span>{label}
+          </div>
+          <div style="font-family:'Fraunces',serif;font-weight:600;font-size:18px;
+                      color:var(--text-100);letter-spacing:-0.01em;
+                      margin-bottom:6px;">{title}</div>
+          <div style="font-size:13px;color:var(--text-300);line-height:1.55;">
+            {model_summary}
+          </div>
+        </div>
+        """
+    ).strip()
 
 
 anthropic_ok = bool(os.getenv("ANTHROPIC_API_KEY"))

@@ -380,7 +380,7 @@ if prompt:
 
     MAX_ITERS = 10
     for _ in range(MAX_ITERS):
-        with st.chat_message("assistant", avatar="◐"):
+        with st.chat_message("assistant"):
             text_box = st.empty()
             text_buf: list[str] = []
 

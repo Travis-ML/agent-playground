@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import textwrap
 from typing import TypedDict
 
 import streamlit as st
@@ -70,13 +71,13 @@ def get_theme() -> Palette:
 def inject_brand_css() -> None:
     """Emit brand CSS scoped to the current theme. Call once per page."""
     t = get_theme()
-    st.markdown(
+    css = textwrap.dedent(
         f"""
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="{_FONTS_HREF}" rel="stylesheet">
         <style>
-          :root {{
+        :root {{
             --bg-void: {t['bg_void']};
             --bg-deep: {t['bg_deep']};
             --bg-panel: {t['bg_panel']};
@@ -89,46 +90,46 @@ def inject_brand_css() -> None:
             --text-400: {t['text_400']};
             --accent: {t['accent']};
             --accent-bright: {t['accent_bright']};
-          }}
+        }}
 
-          html, body, [class*="st-"] {{
+        html, body, [class*="st-"] {{
             font-family: 'Sora', sans-serif;
             font-weight: 300;
-          }}
+        }}
 
-          h1, h2, h3, h4 {{
+        h1, h2, h3, h4 {{
             font-family: 'Fraunces', serif;
             font-weight: 500;
             letter-spacing: -0.02em;
             color: var(--text-100);
-          }}
-          h1 em, h2 em, h3 em {{
+        }}
+        h1 em, h2 em, h3 em {{
             font-style: italic;
             color: var(--accent);
             font-feature-settings: "ss01";
-          }}
+        }}
 
-          code, pre, .stCodeBlock {{
+        code, pre, .stCodeBlock {{
             font-family: 'JetBrains Mono', monospace;
-          }}
+        }}
 
-          .stApp {{
+        .stApp {{
             background: var(--bg-void);
             color: var(--text-200);
-          }}
-          [data-testid="stSidebar"] {{
+        }}
+        [data-testid="stSidebar"] {{
             background: var(--bg-deep);
             border-right: 1px solid var(--line);
-          }}
+        }}
 
-          .tml-label {{
+        .tml-label {{
             font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
             letter-spacing: 0.18em;
             text-transform: uppercase;
             color: var(--text-300);
-          }}
-          .tml-label::before {{
+        }}
+        .tml-label::before {{
             content: '';
             display: inline-block;
             width: 5px;
@@ -136,21 +137,21 @@ def inject_brand_css() -> None:
             background: var(--accent);
             margin-right: 8px;
             vertical-align: 2px;
-          }}
+        }}
 
-          .block-container {{
+        .block-container {{
             padding-top: 2rem;
             max-width: 1100px;
-          }}
+        }}
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+    ).strip()
+    st.markdown(css, unsafe_allow_html=True)
 
 
 def render_brand_wordmark() -> None:
     """Render the 'TravisML / Playground' wordmark in the sidebar."""
-    st.sidebar.markdown(
+    html = textwrap.dedent(
         """
         <div style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;
                     line-height:1.05;color:var(--text-100);margin-bottom:6px;">
@@ -159,9 +160,9 @@ def render_brand_wordmark() -> None:
                      font-feature-settings:'ss01';">Playground</em>
         </div>
         <div class="tml-label" style="margin-bottom:24px;">Agent harness · v0.1</div>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+    ).strip()
+    st.sidebar.markdown(html, unsafe_allow_html=True)
 
 
 def render_theme_toggle() -> None:
