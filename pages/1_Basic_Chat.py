@@ -14,6 +14,7 @@ from playground.branding import (
 )
 from playground.chat_ui import render_message, render_text_stream
 from playground.persistence import ConversationStore
+from playground.prompts.loader import list_prompts, load_prompt
 from playground.providers.base import ChatMessage, MessageComplete, TextBlock
 from playground.providers.config import load_providers_config
 from playground.providers.registry import (
@@ -70,6 +71,23 @@ temperature = st.sidebar.slider(
 )
 
 
+# ---------------- System prompt ----------------
+
+st.sidebar.markdown('<div class="tml-label">System prompt</div>', unsafe_allow_html=True)
+prompts_available = ["(none)"] + list_prompts()
+prompt_choice = st.sidebar.selectbox(
+    "Load from library",
+    prompts_available,
+    key="prompt_choice",
+)
+default_text = (
+    "" if prompt_choice == "(none)" else load_prompt(prompt_choice)
+)
+system_prompt = st.sidebar.text_area(
+    "System prompt", value=default_text, height=180, key="system_prompt_text",
+)
+
+
 # ---------------- Conversation state ----------------
 
 store = ConversationStore()
@@ -83,7 +101,10 @@ if "conversation" not in st.session_state or st.session_state.get("conv_provider
             "model": model,
             "max_tokens": int(max_tokens),
             "temperature": float(temperature),
-            "system_prompt": {"source": None, "text": ""},
+            "system_prompt": {
+                "source": prompt_choice if prompt_choice != "(none)" else None,
+                "text": system_prompt or "",
+            },
             "tools": {"local": [], "mcp": [], "builtin": []},
             "mcp_servers_enabled": [],
         },
@@ -124,7 +145,7 @@ if prompt := st.chat_input("Ask anything..."):
         client = get_client(provider, model)
         events = client.stream_chat(
             messages=messages,
-            system=None,
+            system=system_prompt or None,
             tools=[],
             max_tokens=int(max_tokens),
             temperature=float(temperature),
