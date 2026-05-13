@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from mcp_servers.memory.db.connection import open_connection
 
 

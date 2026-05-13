@@ -10,7 +10,6 @@ from mcp_servers.memory.ids import (
     new_reflection_id,
 )
 
-
 _ULID_RE = re.compile(r"^[0-9A-HJKMNP-TV-Z]{26}$")
 
 
