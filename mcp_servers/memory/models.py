@@ -32,3 +32,15 @@ class Episode:
     created_at: str
     status: str               # 'fresh' | 'consolidated' | 'archived'
     source_refs: list[dict]   # list of {"raw_turn_ref_id": "rt_..."}
+
+
+@dataclass(frozen=True)
+class Entity:
+    id: str
+    canonical_name: str
+    kind: str          # 'person'|'project'|'concept'|'tool'|'file'|'place'|'other'
+    aliases: list[str]
+    summary: str | None
+    first_seen: str
+    last_seen: str
+    importance: float
