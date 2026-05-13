@@ -10,6 +10,10 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 
+from mcp_servers.memory.db.connection import open_connection as _mem_open
+from mcp_servers.memory.db.migrations import apply_migrations as _mem_migrate
+from mcp_servers.memory.hot_path import on_turn_appended as _mem_record
+
 import playground.tools.examples  # noqa: F401, E402  -- registers echo, get_current_time
 from playground.branding import (
     inject_brand_css,
@@ -42,6 +46,16 @@ from playground.providers.registry import (
 from playground.tools import call_local_tool, get_local_tools
 
 load_dotenv()
+
+
+@st.cache_resource(show_spinner=False)
+def _memory_conn():
+    import pathlib
+    p = (st.session_state.get("MEMORY_DB_PATH")
+         or (pathlib.Path.home() / ".travisml-playground" / "memory.db"))
+    c = _mem_open(p)
+    _mem_migrate(c)
+    return c
 
 
 def _now_iso() -> str:
@@ -407,6 +421,13 @@ if prompt:
             {"type": "text", "text": b.text} for b in user_msg.content
         ],
     })
+    _mem_record(
+        _memory_conn(),
+        conversation_id=conv.id,
+        turn_index=len(conv.data["messages"]) - 1,
+        role="user",
+        occurred_at=_now_iso(),
+    )
     render_message(user_msg)
 
     tool_to_server: dict[str, str] = st.session_state.get("_mcp_tool_to_server", {})
@@ -471,6 +492,13 @@ if prompt:
                     "cache_read_tokens": final.usage.cache_read_tokens,
                 }
             conv.append_message(save_msg)
+            _mem_record(
+                _memory_conn(),
+                conversation_id=conv.id,
+                turn_index=len(conv.data["messages"]) - 1,
+                role="assistant",
+                occurred_at=_now_iso(),
+            )
 
             if not tool_calls:
                 break
