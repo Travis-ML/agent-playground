@@ -110,19 +110,18 @@ if not recent:
     st.caption("No dream runs yet.")
 else:
     for dr in recent:
-        with st.container(border=True):
-            head = f"**{dr.started_at}** · {dr.cycle_mode} · {dr.status}"
-            if dr.ended_at:
-                head += f" · ended {dr.ended_at}"
-            st.markdown(head)
-            if dr.stages:
-                cells = st.columns(min(6, max(1, len(dr.stages))))
-                for i, (name, metrics) in enumerate(dr.stages.items()):
-                    with cells[i % len(cells)]:
-                        st.caption(name)
-                        st.json(metrics, expanded=False)
+        label = f"{dr.started_at} · {dr.cycle_mode} · {dr.status}"
+        if dr.ended_at and dr.ended_at != dr.started_at:
+            label += f" · ended {dr.ended_at}"
+        if dr.error:
+            label += " · ⚠ error"
+        with st.expander(label, expanded=False):
             if dr.error:
                 st.error(dr.error)
+            if dr.stages:
+                st.json(dr.stages, expanded=False)
+            else:
+                st.caption("No stage metrics recorded.")
 
 st.divider()
 st.html('<div class="tml-label">Open hypotheses</div>')
