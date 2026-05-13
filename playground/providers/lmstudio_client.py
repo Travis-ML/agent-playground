@@ -8,6 +8,10 @@ import httpx
 
 from playground.providers.openai_client import OpenAIClient
 
+# Note: this client talks to any OpenAI-compatible local inference server
+# at LMSTUDIO_BASE_URL. The "lmstudio" name is historical — point it at
+# LM Studio, vLLM, llama.cpp's OpenAI server, or anything compatible.
+
 
 class LMStudioClient(OpenAIClient):
     name = "lmstudio"

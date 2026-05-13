@@ -165,6 +165,18 @@ if mcp_servers:
 active_tools = active_tools + mcp_tool_defs
 
 
+# ---------------- Background pack from memory MCP ----------------
+
+if pool and "memory" in enabled_servers:
+    try:
+        msgs = pool.get_prompt("memory", "background", {})
+        bg = "\n\n".join(m["content"][0]["text"] for m in msgs)
+        if bg.strip():
+            system_prompt = (bg + "\n\n" + (system_prompt or "")).strip()
+    except Exception:
+        pass  # degrade silently
+
+
 # ---------------- Conversation state ----------------
 
 store = ConversationStore()
@@ -407,6 +419,19 @@ if prompt:
             {"type": "text", "text": b.text} for b in user_msg.content
         ],
     })
+    if pool and "memory" in enabled_servers:
+        try:
+            pool.call_tool(
+                "memory", "record_turn_tool",
+                {
+                    "conversation_id": conv.id,
+                    "turn_index": len(conv.data["messages"]) - 1,
+                    "role": "user",
+                    "occurred_at": _now_iso(),
+                },
+            )
+        except Exception:
+            pass
     render_message(user_msg)
 
     tool_to_server: dict[str, str] = st.session_state.get("_mcp_tool_to_server", {})
@@ -471,6 +496,19 @@ if prompt:
                     "cache_read_tokens": final.usage.cache_read_tokens,
                 }
             conv.append_message(save_msg)
+            if pool and "memory" in enabled_servers:
+                try:
+                    pool.call_tool(
+                        "memory", "record_turn_tool",
+                        {
+                            "conversation_id": conv.id,
+                            "turn_index": len(conv.data["messages"]) - 1,
+                            "role": "assistant",
+                            "occurred_at": _now_iso(),
+                        },
+                    )
+                except Exception:
+                    pass
 
             if not tool_calls:
                 break

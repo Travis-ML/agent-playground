@@ -85,6 +85,24 @@ Click **Reload mcp.json** in Basic Chat's sidebar.
 - `tests/` — pytest suite
 - `docs/superpowers/` — design specs and implementation plans
 
+## Memory + Dreaming
+
+The bundled `memory` MCP server gives the playground agent persistent
+cross-conversation memory. A separate background dreamer process runs a
+six-stage consolidation cycle that produces a bi-temporal knowledge
+graph plus speculative hypotheses you can curate from the new
+**Dreaming** page.
+
+Quick start:
+
+1. Set `LMSTUDIO_BASE_URL` to your local OpenAI-compatible inference
+   server (vLLM, LM Studio, etc.).
+2. `streamlit run app.py` — the memory server starts automatically.
+3. Send a few messages in Basic Chat. Then open **Dreaming** → click
+   **Start daemon** and **Dream now (full)**.
+
+Design: `docs/superpowers/specs/2026-05-11-memory-dreaming-mcp-design.md`.
+
 ## Spec
 
 Full v1 design: [docs/superpowers/specs/2026-05-09-travisml-agent-playground-design.md](docs/superpowers/specs/2026-05-09-travisml-agent-playground-design.md).

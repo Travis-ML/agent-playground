@@ -5,6 +5,12 @@
       "args": ["mcp_servers/notes/server.py"],
       "description": "Bundled — agent scratch notes, persists to disk",
       "enabled": true
+    },
+    "memory": {
+      "command": "python",
+      "args": ["-m", "mcp_servers.memory.server"],
+      "description": "Bundled — persistent cross-conversation memory + dreaming",
+      "enabled": true
     }
   }
 }

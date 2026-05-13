@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "2026-05-01T15-00-00-eval1",
+  "page": "basic_chat",
+  "started_at": "2026-05-01T15:00:00Z",
+  "ended_at": "2026-05-01T15:10:00Z",
+  "config": {"provider": "lmstudio", "model": "vllm/local"},
+  "messages": [
+    {"role": "user", "ts": "2026-05-01T15:00:01Z", "content": [
+      {"type": "text", "text": "Keep your replies terse. I'd rather a one-liner than a paragraph."}
+    ]},
+    {"role": "assistant", "ts": "2026-05-01T15:00:02Z", "content": [
+      {"type": "text", "text": "got it."}
+    ]},
+    {"role": "user", "ts": "2026-05-01T15:00:30Z", "content": [
+      {"type": "text", "text": "Also: I'm on Python 3.14 across all projects now."}
+    ]},
+    {"role": "assistant", "ts": "2026-05-01T15:00:31Z", "content": [
+      {"type": "text", "text": "noted."}
+    ]}
+  ],
+  "events": []
+}

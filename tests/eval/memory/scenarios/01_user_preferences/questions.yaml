@@ -1,0 +1,9 @@
+- id: q1
+  query: "What output style does the user prefer?"
+  reference: |
+    The user prefers terse, brief replies — one-liners over paragraphs.
+
+- id: q2
+  query: "Which Python version is the user using?"
+  reference: |
+    Python 3.14, across all projects.
