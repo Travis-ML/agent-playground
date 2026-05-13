@@ -16,3 +16,19 @@ class RawTurnRef:
     extraction_status: str  # 'pending' | 'done' | 'failed' | 'poison'
     retry_count: int = 0
     last_error: str | None = None
+
+
+@dataclass(frozen=True)
+class Episode:
+    id: str
+    actor: str
+    predicate: str
+    subject_entity: str | None
+    object_entity: str | None
+    object_value: str | None
+    summary: str
+    importance: float
+    occurred_at: str
+    created_at: str
+    status: str               # 'fresh' | 'consolidated' | 'archived'
+    source_refs: list[dict]   # list of {"raw_turn_ref_id": "rt_..."}
