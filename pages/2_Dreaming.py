@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -12,6 +14,7 @@ from mcp_servers.memory.dreamer_runner.runner import run_cycle
 from mcp_servers.memory.dreamer_runner.stages import all_stages
 from mcp_servers.memory.repo.dream_runs import list_recent
 from mcp_servers.memory.repo.hypotheses import list_by_status, resolve
+from mcp_servers.memory.repo.entities import list_top_importance
 from playground.branding import (
     inject_brand_css, render_brand_wordmark, render_theme_toggle,
 )
@@ -143,5 +146,63 @@ else:
             if c3.button("Set aside", key=f"aside_{h.id}", use_container_width=True):
                 resolve(conn, h.id, status="set_aside", resolved_by="operator")
                 st.rerun()
+
+st.divider()
+st.html('<div class="tml-label">Entity browser</div>')
+
+q = st.text_input("search entities", key="_entity_search")
+if q:
+    rows = conn.execute(
+        "SELECT * FROM entities WHERE canonical_name LIKE ? "
+        "ORDER BY importance DESC LIMIT 25",
+        (f"%{q}%",),
+    ).fetchall()
+else:
+    rows = [{
+        "id": e.id, "canonical_name": e.canonical_name, "kind": e.kind,
+        "summary": e.summary, "importance": e.importance,
+    } for e in list_top_importance(conn, limit=25)]
+
+for r in rows:
+    name = r["canonical_name"] if isinstance(r, dict) else r["canonical_name"]
+    kind = r["kind"] if isinstance(r, dict) else r["kind"]
+    eid = r["id"] if isinstance(r, dict) else r["id"]
+    st.caption(f"**{name}** · kind={kind} · id={eid}")
+
+
+with st.expander("Settings", expanded=False):
+    st.html('<div class="tml-label">Trigger thresholds</div>')
+    row = conn.execute(
+        "SELECT value FROM dreamer_config WHERE key = 'triggers'"
+    ).fetchone()
+    cfg = json.loads(row["value"]) if row else {
+        "light_min_episodes": 20,
+        "light_interval_min": 15,
+        "full_idle_min": 30,
+        "scheduled_full_at": "03:30",
+    }
+    cfg["light_min_episodes"] = st.number_input(
+        "Light cycle: min pending episodes",
+        min_value=1, value=int(cfg["light_min_episodes"]),
+    )
+    cfg["light_interval_min"] = st.number_input(
+        "Light cycle: every N minutes of activity",
+        min_value=1, value=int(cfg["light_interval_min"]),
+    )
+    cfg["full_idle_min"] = st.number_input(
+        "Full cycle: after N idle minutes",
+        min_value=1, value=int(cfg["full_idle_min"]),
+    )
+    cfg["scheduled_full_at"] = st.text_input(
+        "Scheduled full cycle (HH:MM, 24h)",
+        value=str(cfg["scheduled_full_at"]),
+    )
+    if st.button("Save settings"):
+        conn.execute(
+            "INSERT INTO dreamer_config (key, value) VALUES ('triggers', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (json.dumps(cfg),),
+        )
+        st.success("saved")
 
 render_theme_toggle()
