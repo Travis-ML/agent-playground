@@ -62,6 +62,73 @@ def get_by_id(conn: sqlite3.Connection, fact_id: str) -> Fact | None:
     return _row(row) if row else None
 
 
+def supersede_fact(
+    conn: sqlite3.Connection,
+    *,
+    old_fact_id: str,
+    new_object_entity: str | None,
+    new_object_value: str | None,
+    change_time: str,
+    source_episode_ids: list[str],
+    confidence: float,
+    created_in_dream_run: str,
+) -> Fact:
+    old = get_by_id(conn, old_fact_id)
+    if old is None:
+        raise KeyError(old_fact_id)
+    if old.superseded_by is not None:
+        raise ValueError(f"fact {old_fact_id} already superseded")
+
+    new = insert_new_fact(
+        conn,
+        subject_entity=old.subject_entity,
+        predicate=old.predicate,
+        object_entity=new_object_entity,
+        object_value=new_object_value,
+        valid_from=change_time,
+        learned_at=change_time,
+        source_episode_ids=source_episode_ids,
+        confidence=confidence,
+        created_in_dream_run=created_in_dream_run,
+        supersedes=old_fact_id,
+    )
+    conn.execute(
+        """
+        UPDATE facts
+        SET valid_to = ?, invalidated_at = ?, superseded_by = ?
+        WHERE id = ?
+        """,
+        (change_time, change_time, new.id, old_fact_id),
+    )
+    return new
+
+
+def list_facts_for_subject_predicate(
+    conn: sqlite3.Connection, *,
+    subject_entity: str, predicate: str, currently_believed: bool = False,
+) -> list[Fact]:
+    if currently_believed:
+        rows = conn.execute(
+            """
+            SELECT * FROM facts
+            WHERE subject_entity = ? AND predicate = ?
+              AND valid_to IS NULL AND invalidated_at IS NULL
+            ORDER BY learned_at DESC
+            """,
+            (subject_entity, predicate),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT * FROM facts
+            WHERE subject_entity = ? AND predicate = ?
+            ORDER BY learned_at
+            """,
+            (subject_entity, predicate),
+        ).fetchall()
+    return [_row(r) for r in rows]
+
+
 def _row(r: sqlite3.Row) -> Fact:
     return Fact(
         id=r["id"], subject_entity=r["subject_entity"], predicate=r["predicate"],
