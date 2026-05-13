@@ -210,6 +210,31 @@ def get_entity(name: str) -> dict:
         return handle_get_entity(conn=c, name=name)
 
 
+@mcp.tool()
+def force_dream(cycle: str = "full", model: str = "vllm/local") -> dict:
+    """Operator-only: manually trigger a dream cycle. Returns the run id."""
+    with _open() as c:
+        return handle_force_dream(conn=c, cycle=cycle, model=model)
+
+
+def handle_force_dream(
+    *, conn: sqlite3.Connection,
+    cycle: str = "full",
+    model: str = "vllm/local",
+) -> dict:
+    try:
+        from mcp_servers.memory.dreamer_runner.runner import run_cycle
+        from mcp_servers.memory.dreamer_runner.stages import all_stages
+        dr = run_cycle(
+            conn=conn, pid=os.getpid(),
+            cycle_mode=cycle, trigger_reason="manual",
+            model_used=model, stages=all_stages(),
+        )
+        return {"dream_run_id": dr.id, "status": dr.status}
+    except Exception as e:
+        return {"dream_run_id": None, "status": "failed", "error": str(e)}
+
+
 def handle_status(*, conn: sqlite3.Connection) -> dict:
     counts = {}
     for table in ("raw_turn_refs", "episodes", "entities", "facts",

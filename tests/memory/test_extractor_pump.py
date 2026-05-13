@@ -16,7 +16,8 @@ def _stream(payload):
 def test_pump_once_processes_all_pending(
     conn: sqlite3.Connection, tmp_path: Path,
 ) -> None:
-    page = tmp_path / "basic_chat"; page.mkdir(parents=True)
+    page = tmp_path / "basic_chat"
+    page.mkdir(parents=True)
     (page / "c.json").write_text(json.dumps({
         "id": "c", "page": "basic_chat",
         "messages": [

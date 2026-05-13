@@ -8,13 +8,16 @@ from collections.abc import Callable
 from typing import Any
 
 from mcp_servers.memory.dreamer_runner.lifecycle import (
-    acquire_lock, heartbeat, release_lock,
+    acquire_lock,
+    heartbeat,
+    release_lock,
 )
 from mcp_servers.memory.models import DreamRun
 from mcp_servers.memory.repo.dream_runs import (
-    finish_run, record_stage, start_run,
+    finish_run,
+    record_stage,
+    start_run,
 )
-
 
 _CYCLE_STAGES: dict[str, list[str]] = {
     "light":       ["ingest_cluster", "consolidate", "extract", "decay_reindex"],

@@ -5,8 +5,10 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from mcp_servers.memory.extractor.worker import extract_for_turn
-from mcp_servers.memory.providers.base import (  # noqa: re-exported in stub below
-    MessageComplete, TextDelta, Usage,
+from mcp_servers.memory.providers.base import (  # noqa: F401
+    MessageComplete,
+    TextDelta,
+    Usage,
 )
 from mcp_servers.memory.repo.episodes import list_by_status
 from mcp_servers.memory.repo.raw_turns import record_turn

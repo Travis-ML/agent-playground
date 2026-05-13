@@ -4,7 +4,10 @@ import sqlite3
 import pytest
 
 from mcp_servers.memory.dreamer_runner.lifecycle import (
-    LockHeld, acquire_lock, heartbeat, release_lock,
+    LockHeld,
+    acquire_lock,
+    heartbeat,
+    release_lock,
 )
 
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 import time
 from pathlib import Path
 
@@ -59,8 +58,6 @@ def cmd_status(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     """Trigger loop. Polls for trigger conditions; runs cycles. Exits on
     SIGINT. v1 cadence is hard-coded; tuning lives in dreamer_config (Phase 16)."""
-    conn = _open()
-    stages = all_stages()
     while True:
         # Phase 7 stub: no trigger logic yet — just sleep. Phase 8+ adds it.
         time.sleep(60)

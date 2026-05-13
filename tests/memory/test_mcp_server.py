@@ -4,6 +4,7 @@ from mcp_servers.memory.repo.entities import get_or_create
 from mcp_servers.memory.repo.episodes import insert_episode
 from mcp_servers.memory.repo.facts import insert_new_fact
 from mcp_servers.memory.server import (
+    handle_force_dream,
     handle_get_entity,
     handle_record_turn,
     handle_search_episodes,
@@ -69,3 +70,9 @@ def test_handle_status_reports_counts(conn: sqlite3.Connection) -> None:
     assert out["counts"]["episodes"] == 0
     assert "last_dream_run" in out
     assert out["last_dream_run"] is None
+
+
+def test_handle_force_dream_returns_dream_run_id(conn: sqlite3.Connection) -> None:
+    out = handle_force_dream(conn=conn, cycle="maintenance", model="vllm/local")
+    assert out["status"] in ("completed", "failed")
+    assert out["dream_run_id"].startswith("dr_")

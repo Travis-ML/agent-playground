@@ -7,7 +7,11 @@ import sqlite3
 from pathlib import Path
 
 from mcp_servers.memory.providers.base import (
-    ChatMessage, LLMClient, MessageComplete, TextBlock, TextDelta,
+    ChatMessage,
+    LLMClient,
+    MessageComplete,
+    TextBlock,
+    TextDelta,
 )
 from mcp_servers.memory.repo.episodes import insert_episode
 from mcp_servers.memory.repo.raw_turn_content import read_turn_text
