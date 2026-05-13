@@ -44,3 +44,21 @@ class Entity:
     first_seen: str
     last_seen: str
     importance: float
+
+
+@dataclass(frozen=True)
+class Fact:
+    id: str
+    subject_entity: str
+    predicate: str
+    object_entity: str | None
+    object_value: str | None
+    valid_from: str
+    valid_to: str | None
+    learned_at: str
+    invalidated_at: str | None
+    source_episode_ids: list[str]
+    confidence: float
+    supersedes: str | None
+    superseded_by: str | None
+    created_in_dream_run: str
