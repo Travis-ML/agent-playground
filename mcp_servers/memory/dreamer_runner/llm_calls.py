@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 
 from mcp_servers.memory.providers.base import (
-    ChatMessage, LLMClient, MessageComplete, TextBlock, TextDelta,
+    ChatMessage,
+    LLMClient,
+    MessageComplete,
+    TextBlock,
+    TextDelta,
 )
 
 
