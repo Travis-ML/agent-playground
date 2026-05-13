@@ -62,3 +62,42 @@ class Fact:
     supersedes: str | None
     superseded_by: str | None
     created_in_dream_run: str
+
+
+@dataclass(frozen=True)
+class Reflection:
+    id: str
+    summary: str
+    importance: float
+    level: int
+    source_kind: str       # 'episode_cluster' | 'reflection_cluster'
+    source_ids: list[str]
+    created_at: str
+    created_in_dream_run: str
+
+
+@dataclass(frozen=True)
+class Hypothesis:
+    id: str
+    statement: str
+    source_node_ids: list[str]
+    confidence: float
+    status: str                   # 'open'|'corroborated'|'refuted'|'set_aside'
+    resolved_at: str | None
+    resolved_by: str | None
+    resolution_note: str | None
+    created_at: str
+    created_in_dream_run: str
+
+
+@dataclass(frozen=True)
+class DreamRun:
+    id: str
+    started_at: str
+    ended_at: str | None
+    cycle_mode: str           # 'light'|'full'|'maintenance'
+    trigger_reason: str       # 'idle_timeout'|'queue_depth'|'scheduled'|'manual'
+    stages: dict              # per-stage metrics & timing
+    model_used: str
+    status: str               # 'running'|'completed'|'failed'|'aborted'
+    error: str | None = None
