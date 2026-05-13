@@ -12,7 +12,8 @@ from sklearn.cluster import AgglomerativeClustering
 from mcp_servers.memory.embeddings.base import EmbeddingProvider
 from mcp_servers.memory.repo.episodes import list_by_status
 from mcp_servers.memory.retrieval.vector_search import (
-    has_embedding, upsert_embedding,
+    has_embedding,
+    upsert_embedding,
 )
 
 
@@ -34,7 +35,7 @@ def cluster_episodes(
     )
     labels = model.fit_predict(X)
     groups: dict[int, list[str]] = {}
-    for eid, lab in zip(episode_ids, labels):
+    for eid, lab in zip(episode_ids, labels, strict=True):
         groups.setdefault(int(lab), []).append(eid)
     return list(groups.values())
 
@@ -48,12 +49,6 @@ def run(
     ctx: dict | None = None,
     **_: Any,
 ) -> dict[str, Any]:
-    if embedder is None:
-        from mcp_servers.memory.embeddings.sentence_transformers_provider import (
-            SentenceTransformersProvider,
-        )
-        embedder = SentenceTransformersProvider()
-
     eps = list_by_status(conn, "fresh")
     if not eps:
         return {
@@ -65,16 +60,22 @@ def run(
             },
         }
 
+    if embedder is None:
+        from mcp_servers.memory.embeddings.sentence_transformers_provider import (
+            SentenceTransformersProvider,
+        )
+        embedder = SentenceTransformersProvider()
+
     missing = [e for e in eps if not has_embedding(conn, "episode", e.id)]
     vecs: list[list[float]] = []
     if missing:
         vecs = embedder.embed_many([e.summary for e in missing])
-        for e, v in zip(missing, vecs):
+        for e, v in zip(missing, vecs, strict=True):
             upsert_embedding(conn, node_kind="episode", node_id=e.id, embedding=v)
 
     # gather embeddings for ALL fresh episodes (including ones we just wrote)
     all_vecs: list[list[float]] = []
-    summary_vecs = {e.id: v for e, v in zip(missing, vecs)} if missing else {}
+    summary_vecs = {e.id: v for e, v in zip(missing, vecs, strict=True)} if missing else {}
     for e in eps:
         if e.id in summary_vecs:
             all_vecs.append(summary_vecs[e.id])

@@ -1,7 +1,8 @@
 import sqlite3
 
 from mcp_servers.memory.dreamer_runner.stages.stage_1_cluster import (
-    cluster_episodes, run,
+    cluster_episodes,
+    run,
 )
 from mcp_servers.memory.repo.episodes import insert_episode
 

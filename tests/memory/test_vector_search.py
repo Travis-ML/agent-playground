@@ -1,7 +1,8 @@
 import sqlite3
 
 from mcp_servers.memory.retrieval.vector_search import (
-    has_embedding, upsert_embedding,
+    has_embedding,
+    upsert_embedding,
 )
 
 
