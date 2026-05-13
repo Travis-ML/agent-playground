@@ -76,3 +76,42 @@ def test_handle_force_dream_returns_dream_run_id(conn: sqlite3.Connection) -> No
     out = handle_force_dream(conn=conn, cycle="maintenance", model="vllm/local")
     assert out["status"] in ("completed", "failed")
     assert out["dream_run_id"].startswith("dr_")
+
+
+# Phase 14 tests
+from mcp_servers.memory.server import (
+    handle_recall, handle_list_hypotheses, handle_traverse_graph,
+)
+
+
+def test_handle_recall_returns_relevance_scores(
+    conn: sqlite3.Connection, fixed_embedder,
+) -> None:
+    from mcp_servers.memory.retrieval.vector_search import upsert_embedding
+    e = insert_episode(conn, actor="user", predicate="x",
+                       subject_entity=None, object_entity=None,
+                       object_value="-", summary="hello world",
+                       importance=0.5, occurred_at="2026-05-12T15:00:00Z",
+                       source_refs=[])
+    upsert_embedding(conn, node_kind="episode", node_id=e.id,
+                     embedding=fixed_embedder.embed("hello world"))
+    out = handle_recall(conn=conn, query="hello world",
+                        embedder=fixed_embedder, max_results=5)
+    assert isinstance(out["memories"], list)
+    if out["memories"]:
+        assert "relevance" in out["memories"][0]
+
+
+def test_handle_list_hypotheses_empty_by_default(conn: sqlite3.Connection) -> None:
+    out = handle_list_hypotheses(conn=conn, status="open")
+    assert out["hypotheses"] == []
+
+
+def test_handle_traverse_graph_walks_links(conn: sqlite3.Connection) -> None:
+    from mcp_servers.memory.repo.links import add_link
+    add_link(conn, src_kind="episode", src_id="ep_a",
+             dst_kind="episode", dst_id="ep_b", link_type="see_also")
+    out = handle_traverse_graph(
+        conn=conn, start_kind="episode", start_id="ep_a", max_hops=2,
+    )
+    assert "ep_b" in [n["node_id"] for n in out["nodes"]]

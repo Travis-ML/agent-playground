@@ -258,5 +258,88 @@ def status_resource() -> str:
         return json.dumps(handle_status(conn=c), indent=2)
 
 
+# Phase 14: HippoRAG retrieval tools
+from mcp_servers.memory.repo.hypotheses import list_by_status as _list_hyp
+from mcp_servers.memory.repo.links import list_links_from
+from mcp_servers.memory.retrieval.recall import recall as _recall
+
+
+def handle_recall(
+    *, conn: sqlite3.Connection,
+    query: str,
+    max_results: int = 8,
+    kinds: list[str] | None = None,
+    embedder=None,
+) -> dict:
+    memories = _recall(
+        conn=conn, query=query, embedder=embedder,
+        max_results=max_results, kinds=kinds,
+    )
+    return {"memories": memories}
+
+
+def handle_list_hypotheses(
+    *, conn: sqlite3.Connection, status: str = "open", limit: int = 10,
+) -> dict:
+    rows = _list_hyp(conn, status, limit=limit)
+    return {"hypotheses": [
+        {"id": h.id, "statement": h.statement,
+         "confidence": h.confidence, "status": h.status,
+         "sources": h.source_node_ids, "created_at": h.created_at}
+        for h in rows
+    ]}
+
+
+def handle_traverse_graph(
+    *, conn: sqlite3.Connection,
+    start_kind: str, start_id: str,
+    max_hops: int = 2,
+    link_types: list[str] | None = None,
+) -> dict:
+    seen: set[tuple[str, str]] = {(start_kind, start_id)}
+    frontier: list[tuple[str, str]] = [(start_kind, start_id)]
+    for _ in range(max_hops):
+        next_frontier: list[tuple[str, str]] = []
+        for (k, i) in frontier:
+            for row in list_links_from(conn, src_kind=k, src_id=i):
+                if link_types and row["link_type"] not in link_types:
+                    continue
+                key = (row["dst_kind"], row["dst_id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                next_frontier.append(key)
+        frontier = next_frontier
+    return {"nodes": [{"node_kind": k, "node_id": i} for (k, i) in seen]}
+
+
+@mcp.tool()
+def recall(query: str, max_results: int = 8, kinds: list[str] | None = None) -> dict:
+    """Vector + PageRank-spread retrieval. Returns mixed-kind memories."""
+    with _open() as c:
+        return handle_recall(conn=c, query=query,
+                             max_results=max_results, kinds=kinds)
+
+
+@mcp.tool()
+def list_hypotheses(status: str = "open", limit: int = 10) -> dict:
+    """Surface dream-generated speculations."""
+    with _open() as c:
+        return handle_list_hypotheses(conn=c, status=status, limit=limit)
+
+
+@mcp.tool()
+def traverse_graph(
+    start_kind: str, start_id: str,
+    max_hops: int = 2, link_types: list[str] | None = None,
+) -> dict:
+    """Graph walk from a known node, optionally filtered by link types."""
+    with _open() as c:
+        return handle_traverse_graph(
+            conn=c, start_kind=start_kind, start_id=start_id,
+            max_hops=max_hops, link_types=link_types,
+        )
+
+
 if __name__ == "__main__":
     mcp.run()
