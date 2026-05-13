@@ -15,6 +15,7 @@ from playground.branding import (
     render_brand_wordmark,
     render_theme_toggle,
 )
+from playground.providers.lmstudio_client import discover_lmstudio_models
 
 load_dotenv()
 
@@ -104,6 +105,7 @@ def _status_card(title: str, model_summary: str, connected: bool) -> str:
 anthropic_ok = bool(os.getenv("ANTHROPIC_API_KEY"))
 openai_ok = bool(os.getenv("OPENAI_API_KEY"))
 lmstudio_url = html.escape(os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"))
+lmstudio_ok = bool(discover_lmstudio_models(timeout=0.5))
 
 cols = st.columns(3, gap="medium")
 with cols[0]:
@@ -116,7 +118,7 @@ with cols[1]:
     )
 with cols[2]:
     st.html(
-        _status_card("LM Studio / Local", lmstudio_url, False)
+        _status_card("LM Studio / Local", lmstudio_url, lmstudio_ok)
     )
 
 st.write("")
