@@ -129,6 +129,28 @@ def list_facts_for_subject_predicate(
     return [_row(r) for r in rows]
 
 
+def current_belief_as_of(
+    conn: sqlite3.Connection,
+    *,
+    subject_entity: str,
+    predicate: str,
+    as_of: str,
+) -> Fact | None:
+    row = conn.execute(
+        """
+        SELECT * FROM facts
+        WHERE subject_entity = ? AND predicate = ?
+          AND valid_from <= ?
+          AND (valid_to IS NULL OR valid_to > ?)
+          AND learned_at <= ?
+          AND (invalidated_at IS NULL OR invalidated_at > ?)
+        ORDER BY learned_at DESC LIMIT 1
+        """,
+        (subject_entity, predicate, as_of, as_of, as_of, as_of),
+    ).fetchone()
+    return _row(row) if row else None
+
+
 def _row(r: sqlite3.Row) -> Fact:
     return Fact(
         id=r["id"], subject_entity=r["subject_entity"], predicate=r["predicate"],

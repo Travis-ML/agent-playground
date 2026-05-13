@@ -9,7 +9,7 @@ import pytest
 from mcp_servers.memory.repo.entities import get_or_create
 from mcp_servers.memory.repo.facts import (
     current_belief, insert_new_fact, list_facts_for_subject_predicate,
-    supersede_fact,
+    supersede_fact, current_belief_as_of,
 )
 
 
@@ -102,3 +102,34 @@ def test_at_most_one_current_belief_per_subject_predicate(
         conn, subject_entity=user, predicate="uses", currently_believed=True,
     )
     assert len(cur) == 1
+
+
+def test_current_belief_as_of_returns_fact_valid_at_that_time(
+    conn: sqlite3.Connection,
+) -> None:
+    user = _ent(conn, "Travis")
+    a = _ent(conn, "Python 3.13")
+    b = _ent(conn, "Python 3.14")
+    f_old = insert_new_fact(
+        conn, subject_entity=user, predicate="uses",
+        object_entity=a, object_value=None,
+        valid_from="2026-04-01T00:00:00Z", learned_at="2026-04-01T00:00:00Z",
+        source_episode_ids=[], confidence=0.9, created_in_dream_run="dr_1",
+    )
+    supersede_fact(
+        conn, old_fact_id=f_old.id,
+        new_object_entity=b, new_object_value=None,
+        change_time="2026-05-01T00:00:00Z",
+        source_episode_ids=[], confidence=0.9, created_in_dream_run="dr_2",
+    )
+
+    earlier = current_belief_as_of(
+        conn, subject_entity=user, predicate="uses",
+        as_of="2026-04-15T00:00:00Z",
+    )
+    later = current_belief_as_of(
+        conn, subject_entity=user, predicate="uses",
+        as_of="2026-05-15T00:00:00Z",
+    )
+    assert earlier and earlier.object_entity == a
+    assert later and later.object_entity == b
