@@ -13,10 +13,12 @@ from mcp_servers.memory.dreamer_runner.control import DaemonController
 from mcp_servers.memory.dreamer_runner.runner import run_cycle
 from mcp_servers.memory.dreamer_runner.stages import all_stages
 from mcp_servers.memory.repo.dream_runs import list_recent
-from mcp_servers.memory.repo.hypotheses import list_by_status, resolve
 from mcp_servers.memory.repo.entities import list_top_importance
+from mcp_servers.memory.repo.hypotheses import list_by_status, resolve
 from playground.branding import (
-    inject_brand_css, render_brand_wordmark, render_theme_toggle,
+    inject_brand_css,
+    render_brand_wordmark,
+    render_theme_toggle,
 )
 
 load_dotenv()
