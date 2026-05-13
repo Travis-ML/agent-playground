@@ -39,6 +39,8 @@ packages = ["playground"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["slow: tests that download models or are otherwise slow"]
+addopts = "-m 'not slow'"
 
 [tool.ruff]
 line-length = 100
