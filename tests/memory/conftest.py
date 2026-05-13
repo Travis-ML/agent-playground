@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from collections.abc import Iterator
 from pathlib import Path
@@ -45,9 +46,9 @@ def fixed_embedder() -> Any:
         dim = 768
 
         def embed(self, text: str) -> list[float]:
-            # Cheap, deterministic, distinct per input — not semantic.
-            h = abs(hash(text))
-            return [((h >> (i % 30)) & 1) - 0.5 for i in range(self.dim)]
+            # Cheap, deterministic across processes, distinct per input — not semantic.
+            h = int.from_bytes(hashlib.md5(text.encode()).digest(), "big")
+            return [((h >> (i % 120)) & 1) - 0.5 for i in range(self.dim)]
 
         def embed_many(self, texts: list[str]) -> list[list[float]]:
             return [self.embed(t) for t in texts]

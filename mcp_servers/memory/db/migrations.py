@@ -26,8 +26,14 @@ def apply_migrations(conn: sqlite3.Connection) -> None:
         if version <= current:
             continue
         sql = path.read_text()
-        conn.executescript(sql)
-        conn.execute(
-            "INSERT INTO schema_version (version, applied_at) VALUES (?, ?)",
-            (version, datetime.now(UTC).isoformat()),
-        )
+        try:
+            conn.execute("BEGIN")
+            conn.executescript(sql)
+            conn.execute(
+                "INSERT INTO schema_version (version, applied_at) VALUES (?, ?)",
+                (version, datetime.now(UTC).isoformat()),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise

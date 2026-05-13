@@ -65,7 +65,7 @@ CREATE TABLE facts (
 );
 CREATE INDEX idx_facts_subject_predicate ON facts(subject_entity, predicate);
 CREATE INDEX idx_facts_valid_to ON facts(valid_to);
-CREATE INDEX idx_facts_invalidated_at ON facts(invalidated_at);
+CREATE INDEX idx_facts_learned_at ON facts(learned_at);
 
 CREATE TABLE reflections (
   id                   TEXT PRIMARY KEY,
