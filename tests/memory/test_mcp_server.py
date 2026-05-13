@@ -1,16 +1,14 @@
-import json
 import sqlite3
-from pathlib import Path
 
+from mcp_servers.memory.repo.entities import get_or_create
+from mcp_servers.memory.repo.episodes import insert_episode
+from mcp_servers.memory.repo.facts import insert_new_fact
 from mcp_servers.memory.server import (
     handle_get_entity,
     handle_record_turn,
     handle_search_episodes,
     handle_search_facts,
 )
-from mcp_servers.memory.repo.entities import get_or_create
-from mcp_servers.memory.repo.episodes import insert_episode
-from mcp_servers.memory.repo.facts import insert_new_fact
 
 
 def test_handle_record_turn_writes_row(conn: sqlite3.Connection) -> None:
@@ -61,3 +59,13 @@ def test_handle_get_entity_returns_dossier(conn: sqlite3.Connection) -> None:
     assert out["entity"]["canonical_name"] == "MCP pool"
     assert isinstance(out["recent_facts"], list)
     assert isinstance(out["recent_episodes"], list)
+
+
+def test_handle_status_reports_counts(conn: sqlite3.Connection) -> None:
+    from mcp_servers.memory.server import handle_status
+
+    out = handle_status(conn=conn)
+    assert out["counts"]["raw_turn_refs"] == 0
+    assert out["counts"]["episodes"] == 0
+    assert "last_dream_run" in out
+    assert out["last_dream_run"] is None

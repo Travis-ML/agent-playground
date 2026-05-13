@@ -210,5 +210,28 @@ def get_entity(name: str) -> dict:
         return handle_get_entity(conn=c, name=name)
 
 
+def handle_status(*, conn: sqlite3.Connection) -> dict:
+    counts = {}
+    for table in ("raw_turn_refs", "episodes", "entities", "facts",
+                  "reflections", "hypotheses", "links"):
+        counts[table] = conn.execute(
+            f"SELECT COUNT(*) FROM {table}"
+        ).fetchone()[0]
+    last = conn.execute(
+        "SELECT id, started_at, ended_at, cycle_mode, status "
+        "FROM dream_runs ORDER BY started_at DESC LIMIT 1"
+    ).fetchone()
+    return {
+        "counts": counts,
+        "last_dream_run": dict(last) if last else None,
+    }
+
+
+@mcp.resource("memory://status")
+def status_resource() -> str:
+    with _open() as c:
+        return json.dumps(handle_status(conn=c), indent=2)
+
+
 if __name__ == "__main__":
     mcp.run()
