@@ -11,7 +11,9 @@ from typing import Any
 from mcp_servers.memory.dreamer_runner.entity_resolve import resolve_entity
 from mcp_servers.memory.dreamer_runner.llm_calls import call_json_llm
 from mcp_servers.memory.repo.facts import (
-    current_belief, insert_new_fact, supersede_fact,
+    current_belief,
+    insert_new_fact,
+    supersede_fact,
 )
 from mcp_servers.memory.repo.links import add_link
 

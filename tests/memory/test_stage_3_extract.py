@@ -6,7 +6,7 @@ from mcp_servers.memory.dreamer_runner.stages.stage_3_extract import run
 from mcp_servers.memory.providers.base import MessageComplete, TextDelta, Usage
 from mcp_servers.memory.repo.entities import get_or_create
 from mcp_servers.memory.repo.episodes import insert_episode
-from mcp_servers.memory.repo.facts import insert_new_fact, get_by_id
+from mcp_servers.memory.repo.facts import get_by_id, insert_new_fact
 
 
 def _stream(payload):
