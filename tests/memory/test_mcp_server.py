@@ -1,3 +1,4 @@
+import json as _json
 import sqlite3
 
 from mcp_servers.memory.repo.entities import get_or_create
@@ -5,6 +6,7 @@ from mcp_servers.memory.repo.episodes import insert_episode
 from mcp_servers.memory.repo.facts import insert_new_fact
 from mcp_servers.memory.repo.links import add_link
 from mcp_servers.memory.server import (
+    handle_background_prompt,
     handle_force_dream,
     handle_get_entity,
     handle_list_hypotheses,
@@ -112,3 +114,19 @@ def test_handle_traverse_graph_walks_links(conn: sqlite3.Connection) -> None:
         conn=conn, start_kind="episode", start_id="ep_a", max_hops=2,
     )
     assert "ep_b" in [n["node_id"] for n in out["nodes"]]
+
+
+def test_handle_background_prompt_returns_user_role_text(
+    conn: sqlite3.Connection,
+) -> None:
+    conn.execute(
+        "INSERT INTO dreamer_config (key, value) VALUES ('background_pack_cache', ?)",
+        (_json.dumps({
+            "entities": [{"id": "en_1", "name": "MCP pool",
+                          "summary": "the pool", "score": 0.1}],
+            "reflections": [],
+        }),),
+    )
+    out = handle_background_prompt(conn=conn)
+    assert out["role"] == "user"
+    assert "MCP pool" in out["content"]

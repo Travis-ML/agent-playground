@@ -165,6 +165,18 @@ if mcp_servers:
 active_tools = active_tools + mcp_tool_defs
 
 
+# ---------------- Background pack from memory MCP ----------------
+
+if pool and "memory" in enabled_servers:
+    try:
+        msgs = pool.get_prompt("memory", "background", {})
+        bg = "\n\n".join(m["content"][0]["text"] for m in msgs)
+        if bg.strip():
+            system_prompt = (bg + "\n\n" + (system_prompt or "")).strip()
+    except Exception:
+        pass  # degrade silently
+
+
 # ---------------- Conversation state ----------------
 
 store = ConversationStore()

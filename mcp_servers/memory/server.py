@@ -21,6 +21,7 @@ from mcp_servers.memory.repo.entities import (
 from mcp_servers.memory.repo.hypotheses import list_by_status as _list_hyp
 from mcp_servers.memory.repo.links import list_links_from
 from mcp_servers.memory.repo.raw_turns import record_turn
+from mcp_servers.memory.retrieval.background_pack import build_pack
 from mcp_servers.memory.retrieval.recall import recall as _recall
 
 _DEFAULT_DB = Path.home() / ".travisml-playground" / "memory.db"
@@ -336,6 +337,25 @@ def traverse_graph(
             conn=c, start_kind=start_kind, start_id=start_id,
             max_hops=max_hops, link_types=link_types,
         )
+
+
+def handle_background_prompt(
+    *, conn: sqlite3.Connection,
+    topic_hint: str | None = None,
+    recency_days: int = 7,
+) -> dict:
+    md = build_pack(conn=conn, topic_hint=topic_hint, recency_days=recency_days)
+    return {"role": "user", "content": md}
+
+
+@mcp.prompt()
+def background(topic_hint: str = "", recency_days: int = 7) -> str:
+    """Background memory pack — call at conversation start; prepend the
+    returned text to your system prompt."""
+    with _open() as c:
+        return handle_background_prompt(
+            conn=c, topic_hint=topic_hint or None, recency_days=recency_days,
+        )["content"]
 
 
 if __name__ == "__main__":

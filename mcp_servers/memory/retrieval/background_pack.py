@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import sqlite3
 
-
 _EMPTY = "_No prior memory is available yet — this is a fresh start._\n"
 
 
