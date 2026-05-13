@@ -11,6 +11,7 @@ from mcp_servers.memory.dreamer_runner.control import DaemonController
 from mcp_servers.memory.dreamer_runner.runner import run_cycle
 from mcp_servers.memory.dreamer_runner.stages import all_stages
 from mcp_servers.memory.repo.dream_runs import list_recent
+from mcp_servers.memory.repo.hypotheses import list_by_status, resolve
 from playground.branding import (
     inject_brand_css, render_brand_wordmark, render_theme_toggle,
 )
@@ -117,5 +118,30 @@ else:
                         st.json(metrics, expanded=False)
             if dr.error:
                 st.error(dr.error)
+
+st.divider()
+st.html('<div class="tml-label">Open hypotheses</div>')
+
+open_hyps = list_by_status(conn, "open", limit=20)
+if not open_hyps:
+    st.caption("No open hypotheses yet — run a full dream cycle to generate some.")
+else:
+    for h in open_hyps:
+        with st.container(border=True):
+            st.markdown(f"**?** {h.statement}")
+            st.caption(
+                f"sources: {', '.join(h.source_node_ids[:3])} "
+                f"· confidence {h.confidence:.2f} · created {h.created_at}"
+            )
+            c1, c2, c3, _ = st.columns([2, 2, 2, 6])
+            if c1.button("Corroborate", key=f"corr_{h.id}", use_container_width=True):
+                resolve(conn, h.id, status="corroborated", resolved_by="operator")
+                st.rerun()
+            if c2.button("Refute", key=f"ref_{h.id}", use_container_width=True):
+                resolve(conn, h.id, status="refuted", resolved_by="operator")
+                st.rerun()
+            if c3.button("Set aside", key=f"aside_{h.id}", use_container_width=True):
+                resolve(conn, h.id, status="set_aside", resolved_by="operator")
+                st.rerun()
 
 render_theme_toggle()
