@@ -1,7 +1,7 @@
 import sqlite3
 
-from mcp_servers.memory.retrieval.pagerank import compute_and_store
 from mcp_servers.memory.repo.links import add_link
+from mcp_servers.memory.retrieval.pagerank import compute_and_store
 
 
 def test_compute_pagerank_writes_scores_for_all_nodes(
