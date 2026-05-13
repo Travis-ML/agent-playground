@@ -1,0 +1,7 @@
+facts:
+  - subject_canonical_name_contains: "user"
+    predicate_in: ["prefers", "uses"]
+  - subject_canonical_name_contains: "Travis"
+    predicate_in: ["uses"]
+reflections_min: 0     # may or may not synthesize
+episodes_min: 2
