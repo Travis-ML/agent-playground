@@ -1,7 +1,9 @@
 import sqlite3
 
 from mcp_servers.memory.repo.hypotheses import (
-    insert_hypothesis, list_by_status, resolve,
+    insert_hypothesis,
+    list_by_status,
+    resolve,
 )
 
 
@@ -58,6 +60,6 @@ def test_resolve_invalid_status_raises(conn: sqlite3.Connection) -> None:
     try:
         resolve(conn, h.id, status="invalid_status",
                 resolved_by="operator")
-        assert False, "should have raised ValueError"
+        raise AssertionError("should have raised ValueError")
     except ValueError as e:
         assert "invalid status" in str(e)

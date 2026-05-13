@@ -1,7 +1,9 @@
 import sqlite3
 
 from mcp_servers.memory.repo.reflections import (
-    insert_reflection, list_by_level, list_recent,
+    insert_reflection,
+    list_by_level,
+    list_recent,
 )
 
 

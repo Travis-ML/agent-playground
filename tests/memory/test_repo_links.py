@@ -1,7 +1,9 @@
 import sqlite3
 
 from mcp_servers.memory.repo.links import (
-    add_link, list_links_from, list_links_to,
+    add_link,
+    list_links_from,
+    list_links_to,
 )
 
 
