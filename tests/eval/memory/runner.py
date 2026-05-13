@@ -43,6 +43,26 @@ def _load_llm(provider: str = "lmstudio", model: str | None = None):
     return get_client(provider, model or os.getenv("DREAMER_MODEL", "local"))
 
 
+def grade_with_judge(*, llm, query: str, reference: str, memories: list[dict]) -> dict:
+    from mcp_servers.memory.dreamer_runner.llm_calls import call_json_llm
+    rendered = "\n".join(
+        f"- ({m.get('node_kind')}) {m.get('summary') or m.get('predicate') or m.get('statement')}"
+        for m in memories
+    ) or "(no memories returned)"
+    user = (
+        f"You are grading a memory system. The user asked:\n"
+        f"  {query}\n"
+        f"The correct answer is:\n  {reference.strip()}\n"
+        f"The retrieved memories were:\n{rendered}\n\n"
+        f"Decide if the retrieved memories *would let the agent answer the "
+        f"question correctly*. Return JSON: "
+        f"{{\"verdict\": \"pass\"|\"fail\"|\"partial\", \"reason\": \"...\"}}."
+    )
+    return call_json_llm(
+        llm=llm, system="Return only JSON.", user=user, max_tokens=400,
+    )
+
+
 def run_scenario(scenario_dir: Path) -> dict:
     tmp = Path(tempfile.mkdtemp(prefix="memeval-"))
     conversations_root = tmp / "conversations"
@@ -79,6 +99,19 @@ def run_scenario(scenario_dir: Path) -> dict:
                 "reference": q["reference"].strip(),
                 "memories": memories,
             })
+
+        # 4) grade with judge
+        judge = _load_llm()
+        for q in report["questions"]:
+            q["grade"] = grade_with_judge(
+                llm=judge, query=q["query"],
+                reference=q["reference"], memories=q["memories"],
+            )
+        summary = {"pass": 0, "partial": 0, "fail": 0}
+        for q in report["questions"]:
+            summary[q["grade"].get("verdict", "fail")] = summary.get(
+                q["grade"].get("verdict", "fail"), 0) + 1
+        report["summary"] = summary
         return report
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
