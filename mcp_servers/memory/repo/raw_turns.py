@@ -57,19 +57,29 @@ def mark_extraction_status(
 ) -> None:
     if status == "failed":
         conn.execute(
-            "UPDATE raw_turn_refs SET extraction_status = ?, retry_count = retry_count + 1, last_error = ? WHERE id = ?",
+            (
+                "UPDATE raw_turn_refs "
+                "SET extraction_status = ?, retry_count = retry_count + 1, "
+                "last_error = ? WHERE id = ?"
+            ),
             (status, error, raw_turn_id),
         )
     else:
         conn.execute(
-            "UPDATE raw_turn_refs SET extraction_status = ?, last_error = ? WHERE id = ?",
+            (
+                "UPDATE raw_turn_refs "
+                "SET extraction_status = ?, last_error = ? WHERE id = ?"
+            ),
             (status, error, raw_turn_id),
         )
 
 
 def list_pending(conn: sqlite3.Connection, *, limit: int = 100) -> list[RawTurnRef]:
     rows = conn.execute(
-        "SELECT * FROM raw_turn_refs WHERE extraction_status = 'pending' ORDER BY recorded_at LIMIT ?",
+        (
+            "SELECT * FROM raw_turn_refs "
+            "WHERE extraction_status = 'pending' ORDER BY recorded_at LIMIT ?"
+        ),
         (limit,),
     ).fetchall()
     return [_row_to_model(r) for r in rows]

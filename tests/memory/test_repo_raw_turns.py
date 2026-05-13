@@ -1,7 +1,5 @@
 import sqlite3
 
-import pytest
-
 from mcp_servers.memory.repo.raw_turns import (
     list_pending,
     mark_extraction_status,

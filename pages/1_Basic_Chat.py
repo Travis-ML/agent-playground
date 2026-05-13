@@ -10,11 +10,10 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 
+import playground.tools.examples  # noqa: F401, E402  -- registers echo, get_current_time
 from mcp_servers.memory.db.connection import open_connection as _mem_open
 from mcp_servers.memory.db.migrations import apply_migrations as _mem_migrate
 from mcp_servers.memory.hot_path import on_turn_appended as _mem_record
-
-import playground.tools.examples  # noqa: F401, E402  -- registers echo, get_current_time
 from playground.branding import (
     inject_brand_css,
     render_brand_wordmark,
