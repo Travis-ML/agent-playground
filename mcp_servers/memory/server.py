@@ -18,7 +18,10 @@ from mcp_servers.memory.db.migrations import apply_migrations
 from mcp_servers.memory.repo.entities import (
     get_by_canonical_name,
 )
+from mcp_servers.memory.repo.hypotheses import list_by_status as _list_hyp
+from mcp_servers.memory.repo.links import list_links_from
 from mcp_servers.memory.repo.raw_turns import record_turn
+from mcp_servers.memory.retrieval.recall import recall as _recall
 
 _DEFAULT_DB = Path.home() / ".travisml-playground" / "memory.db"
 
@@ -256,12 +259,6 @@ def handle_status(*, conn: sqlite3.Connection) -> dict:
 def status_resource() -> str:
     with _open() as c:
         return json.dumps(handle_status(conn=c), indent=2)
-
-
-# Phase 14: HippoRAG retrieval tools
-from mcp_servers.memory.repo.hypotheses import list_by_status as _list_hyp
-from mcp_servers.memory.repo.links import list_links_from
-from mcp_servers.memory.retrieval.recall import recall as _recall
 
 
 def handle_recall(

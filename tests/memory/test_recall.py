@@ -1,9 +1,9 @@
 import sqlite3
 
-from mcp_servers.memory.retrieval.recall import recall
-from mcp_servers.memory.retrieval.vector_search import upsert_embedding
 from mcp_servers.memory.repo.episodes import insert_episode
 from mcp_servers.memory.repo.links import add_link
+from mcp_servers.memory.retrieval.recall import recall
+from mcp_servers.memory.retrieval.vector_search import upsert_embedding
 
 
 def _seed(conn: sqlite3.Connection, fixed_embedder):

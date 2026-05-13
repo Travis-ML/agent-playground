@@ -3,12 +3,16 @@ import sqlite3
 from mcp_servers.memory.repo.entities import get_or_create
 from mcp_servers.memory.repo.episodes import insert_episode
 from mcp_servers.memory.repo.facts import insert_new_fact
+from mcp_servers.memory.repo.links import add_link
 from mcp_servers.memory.server import (
     handle_force_dream,
     handle_get_entity,
+    handle_list_hypotheses,
+    handle_recall,
     handle_record_turn,
     handle_search_episodes,
     handle_search_facts,
+    handle_traverse_graph,
 )
 
 
@@ -78,12 +82,6 @@ def test_handle_force_dream_returns_dream_run_id(conn: sqlite3.Connection) -> No
     assert out["dream_run_id"].startswith("dr_")
 
 
-# Phase 14 tests
-from mcp_servers.memory.server import (
-    handle_recall, handle_list_hypotheses, handle_traverse_graph,
-)
-
-
 def test_handle_recall_returns_relevance_scores(
     conn: sqlite3.Connection, fixed_embedder,
 ) -> None:
@@ -108,7 +106,6 @@ def test_handle_list_hypotheses_empty_by_default(conn: sqlite3.Connection) -> No
 
 
 def test_handle_traverse_graph_walks_links(conn: sqlite3.Connection) -> None:
-    from mcp_servers.memory.repo.links import add_link
     add_link(conn, src_kind="episode", src_id="ep_a",
              dst_kind="episode", dst_id="ep_b", link_type="see_also")
     out = handle_traverse_graph(
