@@ -2,7 +2,7 @@
 
 **Status:** Draft for review
 **Date:** 2026-05-11
-**Author:** Travis Lelle (with Claude)
+**Author:** Travis Lelle
 **Scope:** v1 of a bundled MCP server (`mcp_servers/memory/`) that gives the TravisML Agent Playground a single persistent agent identity with long-term memory and offline "dreaming" consolidation.
 
 ---
@@ -293,7 +293,7 @@ Per turn in `pages/1_Basic_Chat.py`:
 3. `memory-mcp` does a single `INSERT INTO raw_turn_refs ... extraction_status='pending'`. Returns immediately.
 4. The extractor worker (a thread inside `memory-mcp`, low priority) polls `raw_turn_refs WHERE extraction_status='pending'`:
    - Loads the raw content from `conversations/<id>.json` at the indexed turn.
-   - Calls the extractor LLM (Haiku-class) with a structured-output prompt for `[{actor, predicate, subject, object, summary, importance, occurred_at}, ...]`.
+   - Calls the extractor LLM (resolved via the playground's local-server provider; default: a vLLM endpoint serving the user's chosen local model) with a structured-output prompt for `[{actor, predicate, subject, object, summary, importance, occurred_at}, ...]`.
    - Inserts 0..N rows into `episodes` (status='fresh').
    - Generates embeddings for new episodes via the local embedder; inserts into `embeddings`.
    - Sets `raw_turn_refs.extraction_status='done'` (or `'failed'`/`'poison'` after N retries).
@@ -514,10 +514,12 @@ The page does not depend on any specific conversation context — it's a global 
 |---|---|---|
 | MCP server framework | `FastMCP` from `mcp` SDK | Same pattern as `mcp_servers/notes` |
 | Storage | SQLite (WAL mode) + `sqlite-vec` | Single file; embedded extension |
-| Embeddings (default) | `sentence-transformers` with `nomic-embed-text-v1.5` (768-dim) | Local, zero per-turn cost |
-| Embeddings (alt) | Voyage / OpenAI / Cohere | Pluggable via `EmbeddingProvider` protocol |
-| Extractor LLM | Haiku-class (default `claude-haiku-4-5`) | Cheap, fast for atomic episode extraction |
-| Dreamer LLM | Sonnet-class for full cycles (default `claude-sonnet-4-6`); Haiku for light | Configurable per stage |
+| Embeddings (default) | `sentence-transformers` with `nomic-embed-text-v1.5` (768-dim), in-process | Local, zero per-turn cost, no external service |
+| Embeddings (alt) | vLLM `/v1/embeddings` (when an embedding model is loaded), or hosted (Voyage / OpenAI / Cohere) | Pluggable via `EmbeddingProvider` protocol |
+| Extractor LLM (default) | **Local via vLLM**, routed through the playground's local-server provider (OpenAI-compatible) | No per-turn API cost; "good enough" reasoning for atomic-episode extraction |
+| Extractor LLM (alt) | Anthropic Haiku-class or OpenAI | Configured per `dreamer_config['extractor.provider/model']` |
+| Dreamer LLM (default) | **Local via vLLM**, same provider as extractor | Local capacity is sufficient for the consolidate/extract/reflect stages at the playground's scale; recombine benefits from a stronger model when desired |
+| Dreamer LLM (alt) | Anthropic Sonnet-class / Haiku-class, or OpenAI, configurable per stage | E.g., `dreamer_config['dreamer.stage_5.provider'] = 'anthropic'` to upgrade just the recombine stage |
 | Clustering | sklearn agglomerative | HDBSCAN as a tuning option |
 | Graph + PageRank | `networkx.pagerank` | Personalized PR; pure Python |
 | Process management | `subprocess.Popen` from Streamlit; CLI alternative `python -m mcp_servers.memory.dreamer serve` | Coordinated via SQLite advisory lock |
