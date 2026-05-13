@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import sqlite3
 
-import pytest
-
 from mcp_servers.memory.repo.entities import get_or_create
 from mcp_servers.memory.repo.facts import (
-    current_belief, insert_new_fact, list_facts_for_subject_predicate,
-    supersede_fact, current_belief_as_of,
+    current_belief,
+    current_belief_as_of,
+    insert_new_fact,
+    list_facts_for_subject_predicate,
+    supersede_fact,
 )
 
 

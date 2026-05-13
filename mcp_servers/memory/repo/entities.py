@@ -60,7 +60,10 @@ def list_top_importance(
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT * FROM entities WHERE kind = ? ORDER BY importance DESC, last_seen DESC LIMIT ?",
+            """
+            SELECT * FROM entities WHERE kind = ?
+            ORDER BY importance DESC, last_seen DESC LIMIT ?
+            """,
             (kind, limit),
         ).fetchall()
     return [_row(r) for r in rows]

@@ -5,7 +5,10 @@ from __future__ import annotations
 import sqlite3
 
 from mcp_servers.memory.repo.entities import (
-    get_by_canonical_name, get_or_create, list_top_importance, touch_seen,
+    get_by_canonical_name,
+    get_or_create,
+    list_top_importance,
+    touch_seen,
 )
 
 
