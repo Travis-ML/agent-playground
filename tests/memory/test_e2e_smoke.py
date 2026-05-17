@@ -186,7 +186,8 @@ def test_e2e_smoke(conn: sqlite3.Connection, tmp_path: Path, fixed_embedder) -> 
 
     # Embed facts for recall (facts aren't auto-embedded by stages yet)
     facts = conn.execute(
-        "SELECT id, object_value, predicate FROM facts WHERE valid_to IS NULL AND invalidated_at IS NULL"
+        "SELECT id, object_value, predicate FROM facts "
+        "WHERE valid_to IS NULL AND invalidated_at IS NULL"
     ).fetchall()
     for fact in facts:
         # Embed based on predicate or object_value
@@ -195,7 +196,12 @@ def test_e2e_smoke(conn: sqlite3.Connection, tmp_path: Path, fixed_embedder) -> 
         upsert_embedding(conn, node_kind="fact", node_id=fact["id"], embedding=vec)
 
     # Recall: search for "output style preferences" should find terse
-    out = recall(conn=conn, query="output style preferences", embedder=fixed_embedder, max_results=3)
+    out = recall(
+        conn=conn,
+        query="output style preferences",
+        embedder=fixed_embedder,
+        max_results=3,
+    )
     assert any(
         "terse"
         in (m.get("summary") or m.get("object_value") or "")
