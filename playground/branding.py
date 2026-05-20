@@ -180,6 +180,25 @@ def inject_brand_css() -> None:
         [data-testid="stSidebarUserContent"] {{ order: 1 !important; }}
         [data-testid="stSidebarNav"] {{ order: 2 !important; }}
 
+        /* Streamlit ships the sidebar collapse buttons at low opacity until
+           hover, which on this brand's higher-contrast palette reads as
+           "broken icon". Force full visibility and use the accent color on
+           hover for clear affordance. */
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stSidebarCollapsedControl"] {{
+            opacity: 1 !important;
+            color: var(--text-200) !important;
+        }}
+        [data-testid="stSidebarCollapseButton"]:hover,
+        [data-testid="stSidebarCollapsedControl"]:hover {{
+            color: var(--accent) !important;
+            opacity: 1 !important;
+        }}
+        [data-testid="stSidebarCollapseButton"] svg,
+        [data-testid="stSidebarCollapsedControl"] svg {{
+            fill: currentColor !important;
+        }}
+
         .tml-label {{
             font-family: 'JetBrains Mono', monospace !important;
             font-size: 10px !important;
