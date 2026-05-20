@@ -62,7 +62,7 @@ _FONTS_HREF = (
 
 _ICONS_HREF = (
     "https://fonts.googleapis.com/css2?"
-    "family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
+    "family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block"
 )
 
 
