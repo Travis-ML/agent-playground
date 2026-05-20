@@ -180,23 +180,86 @@ def inject_brand_css() -> None:
         [data-testid="stSidebarUserContent"] {{ order: 1 !important; }}
         [data-testid="stSidebarNav"] {{ order: 2 !important; }}
 
-        /* Streamlit ships the sidebar collapse buttons at low opacity until
-           hover, which on this brand's higher-contrast palette reads as
-           "broken icon". Force full visibility and use the accent color on
-           hover for clear affordance. */
-        [data-testid="stSidebarCollapseButton"],
-        [data-testid="stSidebarCollapsedControl"] {{
+        /* Replace Streamlit's default sidebar collapse/expand controls with
+           thin vertical edge buttons. Streamlit's default position (top-
+           center of the sidebar header) and low default opacity make these
+           hard to find on this brand's palette, and they depend on the
+           Material Symbols font being applied to the right testid. We hide
+           Streamlit's icon children and inject our own chevrons via
+           ::before using JetBrains Mono — no icon-font dependency. */
+        [data-testid="stSidebar"] {{
+            position: relative !important;
+        }}
+
+        [data-testid="stSidebarCollapseButton"] {{
+            position: absolute !important;
+            top: 50% !important;
+            right: 0 !important;
+            transform: translateY(-50%) !important;
+            z-index: 100 !important;
+            width: 18px !important;
+            height: 64px !important;
+            min-width: unset !important;
+            padding: 0 !important;
+            background: var(--bg-deep) !important;
+            border: none !important;
+            border-left: 1px solid var(--line) !important;
+            border-radius: 0 !important;
             opacity: 1 !important;
             color: var(--text-200) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: color 0.15s ease, border-color 0.15s ease, width 0.15s ease !important;
         }}
-        [data-testid="stSidebarCollapseButton"]:hover,
+        [data-testid="stSidebarCollapseButton"] > * {{
+            display: none !important;
+        }}
+        [data-testid="stSidebarCollapseButton"]::before {{
+            content: "‹" !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-weight: 400 !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
+            color: inherit !important;
+        }}
+        [data-testid="stSidebarCollapseButton"]:hover {{
+            color: var(--accent) !important;
+            border-left-color: var(--accent) !important;
+            width: 22px !important;
+        }}
+
+        [data-testid="stSidebarCollapsedControl"] {{
+            opacity: 1 !important;
+            width: 18px !important;
+            height: 64px !important;
+            min-width: unset !important;
+            padding: 0 !important;
+            background: var(--bg-deep) !important;
+            border: 1px solid var(--line) !important;
+            border-left: none !important;
+            border-radius: 0 !important;
+            color: var(--text-200) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: color 0.15s ease, border-color 0.15s ease, width 0.15s ease !important;
+        }}
+        [data-testid="stSidebarCollapsedControl"] > * {{
+            display: none !important;
+        }}
+        [data-testid="stSidebarCollapsedControl"]::before {{
+            content: "›" !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-weight: 400 !important;
+            font-size: 16px !important;
+            line-height: 1 !important;
+            color: inherit !important;
+        }}
         [data-testid="stSidebarCollapsedControl"]:hover {{
             color: var(--accent) !important;
-            opacity: 1 !important;
-        }}
-        [data-testid="stSidebarCollapseButton"] svg,
-        [data-testid="stSidebarCollapsedControl"] svg {{
-            fill: currentColor !important;
+            border-color: var(--accent) !important;
+            width: 22px !important;
         }}
 
         .tml-label {{
