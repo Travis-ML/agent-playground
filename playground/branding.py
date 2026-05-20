@@ -170,16 +170,6 @@ def inject_brand_css() -> None:
             border-right: 1px solid var(--line);
         }}
 
-        /* Render the brand wordmark above Streamlit's auto-generated page
-           nav by flipping their flex order. Both elements live as siblings
-           inside stSidebarContent. */
-        [data-testid="stSidebarContent"] {{
-            display: flex !important;
-            flex-direction: column !important;
-        }}
-        [data-testid="stSidebarUserContent"] {{ order: 1 !important; }}
-        [data-testid="stSidebarNav"] {{ order: 2 !important; }}
-
         /* Replace Streamlit's default sidebar collapse/expand controls with
            thin vertical edge buttons. Streamlit's default position (top-
            center of the sidebar header) and low default opacity make these
@@ -538,16 +528,12 @@ def inject_brand_css() -> None:
           fill: var(--text-300) !important;
         }}
 
-        /* Move wordmark above the auto-generated page nav */
-        section[data-testid="stSidebar"] > div:first-child > div:first-child {{
-          display: flex;
-          flex-direction: column;
-        }}
-        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {{
-          order: 2;
-        }}
-        section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{
-          order: 1;
+        /* stSidebarHeader styling — the wordmark gets relocated here by
+           render_brand_wordmark()'s inline script, so give it a bit of
+           breathing room. */
+        [data-testid="stSidebarHeader"] {{
+          padding-top: 8px !important;
+          padding-bottom: 4px !important;
         }}
         </style>
         """
@@ -556,16 +542,40 @@ def inject_brand_css() -> None:
 
 
 def render_brand_wordmark() -> None:
-    """Render the 'TravisML / Playground' wordmark in the sidebar."""
+    """Render the 'TravisML / Playground' wordmark above Streamlit's page nav.
+
+    Streamlit doesn't offer a public hook to inject content into
+    stSidebarHeader, so we emit the markup via st.sidebar.html (which lands
+    in stSidebarUserContent at the bottom of the sidebar) and use a tiny
+    inline script to relocate it into stSidebarHeader on every render. That
+    way the natural sidebar order is: header (wordmark) → nav → user content.
+    """
     html = textwrap.dedent(
         """
-        <div style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;
-                    line-height:1.05;color:var(--text-100);margin-bottom:6px;">
+        <div class="tml-brand-wordmark"
+             style="font-family:'Fraunces',serif;font-weight:600;font-size:22px;
+                    line-height:1.05;color:var(--text-100);margin-bottom:6px;
+                    padding:8px 16px 0;">
           TravisML<br>
           <em style="font-style:italic;font-weight:500;color:var(--accent);
                      font-feature-settings:'ss01';">Playground</em>
         </div>
-        <div class="tml-label" style="margin-bottom:24px;">Agent harness · v0.1</div>
+        <div class="tml-brand-tagline tml-label"
+             style="margin-bottom:16px;padding:0 16px;">
+          Agent harness · v0.1
+        </div>
+        <script>
+          (function relocateWordmark() {
+            const header = document.querySelector('[data-testid="stSidebarHeader"]');
+            if (!header) return;
+            for (const cls of ['tml-brand-wordmark', 'tml-brand-tagline']) {
+              const el = document.querySelector('.' + cls);
+              if (el && el.parentElement !== header) {
+                header.appendChild(el);
+              }
+            }
+          })();
+        </script>
         """
     ).strip()
     st.sidebar.html(html)
