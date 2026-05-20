@@ -170,6 +170,16 @@ def inject_brand_css() -> None:
             border-right: 1px solid var(--line);
         }}
 
+        /* Render the brand wordmark above Streamlit's auto-generated page
+           nav by flipping their flex order. Both elements live as siblings
+           inside stSidebarContent. */
+        [data-testid="stSidebarContent"] {{
+            display: flex !important;
+            flex-direction: column !important;
+        }}
+        [data-testid="stSidebarUserContent"] {{ order: 1 !important; }}
+        [data-testid="stSidebarNav"] {{ order: 2 !important; }}
+
         .tml-label {{
             font-family: 'JetBrains Mono', monospace !important;
             font-size: 10px !important;
