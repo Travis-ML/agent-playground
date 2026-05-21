@@ -47,7 +47,7 @@ def run(
 
     if llm is None:
         from playground.providers.registry import get_client
-        llm = get_client("lmstudio", model=ctx.get("model", "local"))
+        llm = get_client("local", model=ctx.get("model", "local"))
 
     tpl = _PROMPT_PATH.read_text()
     added = 0

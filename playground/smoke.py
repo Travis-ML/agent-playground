@@ -20,7 +20,7 @@ from playground.providers.registry import get_client
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
     parser = argparse.ArgumentParser(prog="playground.smoke")
-    parser.add_argument("--provider", required=True, choices=["anthropic", "openai", "lmstudio"])
+    parser.add_argument("--provider", required=True, choices=["anthropic", "openai", "local"])
     parser.add_argument("--model", default=None, help="Defaults to providers.toml default_model")
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--system", default=None)

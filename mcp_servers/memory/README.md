@@ -7,8 +7,8 @@ across conversations. See the design doc:
 
 ## Quick start
 
-1. Configure `LMSTUDIO_BASE_URL` to point at your local OpenAI-compatible
-   inference server (vLLM, LM Studio, etc.).
+1. Configure `LOCAL_BASE_URL` to point at your local OpenAI-compatible
+   inference server (vLLM, LM Studio, llama.cpp, etc.).
 2. The Streamlit Dreaming page (`pages/2_Dreaming.py`) starts the dreamer
    daemon and exposes operator controls.
 3. The MCP server is registered in `../../mcp.json`.

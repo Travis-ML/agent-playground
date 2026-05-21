@@ -121,25 +121,25 @@ def test_openai_client_basic_stream(fixtures_dir: Path, monkeypatch: pytest.Monk
     assert completes[0].stop_reason == "stop"
 
 
-# ---------------- LM Studio ----------------
+# ---------------- Local (OpenAI-compatible local server) ----------------
 
-def test_lmstudio_client_subclasses_openai(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://example.invalid:1234/v1")
-    from playground.providers.lmstudio_client import LMStudioClient
+def test_local_client_subclasses_openai(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_BASE_URL", "http://example.invalid:1234/v1")
+    from playground.providers.local_client import LocalClient
     from playground.providers.openai_client import OpenAIClient
 
-    c = LMStudioClient(model="local-model")
+    c = LocalClient(model="local-model")
     assert isinstance(c, OpenAIClient)
-    assert c.name == "lmstudio"
+    assert c.name == "local"
 
 
-def test_discover_lmstudio_models_returns_empty_when_unreachable(
+def test_discover_local_models_returns_empty_when_unreachable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from playground.providers.lmstudio_client import discover_lmstudio_models
+    from playground.providers.local_client import discover_local_models
 
-    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1/v1")  # unlikely to be live
-    models = discover_lmstudio_models(timeout=0.1)
+    monkeypatch.setenv("LOCAL_BASE_URL", "http://127.0.0.1:1/v1")  # unlikely to be live
+    models = discover_local_models(timeout=0.1)
     assert models == []
 
 
@@ -150,12 +150,12 @@ def test_registry_lists_available_providers_from_env(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1/v1")  # unreachable
+    monkeypatch.setenv("LOCAL_BASE_URL", "http://127.0.0.1:1/v1")  # unreachable
 
-    avail = list_available_providers(check_lmstudio=False)
+    avail = list_available_providers(check_local=False)
     assert "anthropic" in avail
     assert "openai" not in avail
-    assert "lmstudio" in avail   # presence of env var, not reachability, when check disabled
+    assert "local" in avail   # presence of env var, not reachability, when check disabled
 
 
 def test_registry_get_client_returns_correct_subclass(monkeypatch: pytest.MonkeyPatch) -> None:

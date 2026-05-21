@@ -15,8 +15,10 @@ default_max_tokens = 4096
 default_temperature = 1.0
 capabilities = ["tools", "streaming"]
 
-[lmstudio]
+[local]
+# Any OpenAI-compatible local server (vLLM, LM Studio, llama.cpp, ...).
 # Models discovered at runtime from /v1/models — empty static list.
+# URL is configured via LOCAL_BASE_URL in .env.
 models = []
 default_model = ""
 default_max_tokens = 2048

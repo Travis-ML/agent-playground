@@ -16,9 +16,9 @@ class OpenAICompatibleEmbeddingProvider:
         dim: int,
         api_key: str | None = None,
     ) -> None:
-        self.base_url = (base_url or os.getenv("LMSTUDIO_BASE_URL", "")).rstrip("/")
+        self.base_url = (base_url or os.getenv("LOCAL_BASE_URL", "")).rstrip("/")
         if not self.base_url:
-            raise ValueError("base_url required (or set LMSTUDIO_BASE_URL)")
+            raise ValueError("base_url required (or set LOCAL_BASE_URL)")
         self.model_id = model_id
         self.dim = dim
         self._api_key = api_key or os.getenv("OPENAI_API_KEY", "not-needed")

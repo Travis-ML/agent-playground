@@ -1,4 +1,4 @@
-"""LM Studio provider — OpenAI-compatible local endpoint."""
+"""Local-server provider — any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, ...)."""
 
 from __future__ import annotations
 
@@ -21,9 +21,8 @@ from playground.providers.base import (
 )
 from playground.providers.openai_client import OpenAIClient, _to_openai_messages
 
-# Note: this client talks to any OpenAI-compatible local inference server
-# at LMSTUDIO_BASE_URL. The "lmstudio" name is historical — point it at
-# LM Studio, vLLM, llama.cpp's OpenAI server, or anything compatible.
+# This client talks to any OpenAI-compatible local inference server at
+# LOCAL_BASE_URL — vLLM, LM Studio, llama.cpp's OpenAI server, etc.
 
 # --- Prompted tool-calling support ---------------------------------------
 
@@ -89,16 +88,16 @@ def _parse_prompted_tool_calls(text: str) -> tuple[str, list[dict]]:
 # --- Client --------------------------------------------------------------
 
 
-class LMStudioClient(OpenAIClient):
-    name = "lmstudio"
+class LocalClient(OpenAIClient):
+    name = "local"
 
     def __init__(self, model: str, base_url: str | None = None) -> None:
-        url = base_url or os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
-        # api_key required by SDK but ignored by LM Studio — placeholder is fine.
-        super().__init__(model=model, api_key="lm-studio", base_url=url)
+        url = base_url or os.getenv("LOCAL_BASE_URL", "http://localhost:1234/v1")
+        # api_key required by SDK but ignored by local servers — placeholder is fine.
+        super().__init__(model=model, api_key="local", base_url=url)
 
     def _should_use_prompted_tools(self) -> bool:
-        override = os.getenv("LMSTUDIO_TOOL_PROMPTING", "auto").lower()
+        override = os.getenv("LOCAL_TOOL_PROMPTING", "auto").lower()
         if override == "prompted":
             return True
         if override == "native":
@@ -246,9 +245,9 @@ class LMStudioClient(OpenAIClient):
         yield MessageComplete(usage=usage, stop_reason=stop_reason)
 
 
-def discover_lmstudio_models(base_url: str | None = None, timeout: float = 1.0) -> list[str]:
+def discover_local_models(base_url: str | None = None, timeout: float = 1.0) -> list[str]:
     """Hit /v1/models to discover what's loaded. Returns [] if unreachable."""
-    url = base_url or os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+    url = base_url or os.getenv("LOCAL_BASE_URL", "http://localhost:1234/v1")
     try:
         resp = httpx.get(f"{url.rstrip('/')}/models", timeout=timeout)
         resp.raise_for_status()

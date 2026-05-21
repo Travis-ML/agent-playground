@@ -6,7 +6,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-KNOWN_PROVIDERS = {"anthropic", "openai", "lmstudio"}
+KNOWN_PROVIDERS = {"anthropic", "openai", "local"}
 
 
 class UnknownProviderError(ValueError):

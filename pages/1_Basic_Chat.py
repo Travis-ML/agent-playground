@@ -64,7 +64,7 @@ render_brand_wordmark()
 st.sidebar.html('<div class="tml-label">Model</div>')
 
 providers_cfg = load_providers_config()
-available = list_available_providers(check_lmstudio=False)
+available = list_available_providers(check_local=False)
 if not available:
     st.error("No providers available. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env.")
     st.stop()

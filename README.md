@@ -2,7 +2,7 @@
 
 Branded multi-provider agent harness — chat, tools, MCP servers, and
 auto-saved transcripts — for experimenting with agentic systems against
-Anthropic, OpenAI, and locally-hosted (LM Studio) models.
+Anthropic, OpenAI, and locally-hosted models (vLLM, LM Studio, llama.cpp, anything OpenAI-compatible).
 
 ## Setup
 
@@ -15,7 +15,7 @@ pip install -e ".[dev]"
 
 # 3. Configure
 cp .env.example .env
-$EDITOR .env   # set ANTHROPIC_API_KEY / OPENAI_API_KEY / LMSTUDIO_BASE_URL
+$EDITOR .env   # set ANTHROPIC_API_KEY / OPENAI_API_KEY / LOCAL_BASE_URL
 ```
 
 ## Run
@@ -95,8 +95,8 @@ graph plus speculative hypotheses you can curate from the new
 
 Quick start:
 
-1. Set `LMSTUDIO_BASE_URL` to your local OpenAI-compatible inference
-   server (vLLM, LM Studio, etc.).
+1. Set `LOCAL_BASE_URL` to your local OpenAI-compatible inference server
+   (vLLM, LM Studio, llama.cpp, etc.).
 2. `streamlit run app.py` — the memory server starts automatically.
 3. Send a few messages in Basic Chat. Then open **Dreaming** → click
    **Start daemon** and **Dream now (full)**.

@@ -1,4 +1,6 @@
-"""Tests for Gemma-style prompted tool calling in LMStudioClient."""
+"""Tests for Gemma-style prompted tool calling in LocalClient."""
+
+# (file renamed from test_lmstudio_prompted_tools.py during the provider rename)
 
 from __future__ import annotations
 
@@ -14,8 +16,8 @@ from playground.providers.base import (
     ToolCallComplete,
     ToolDefinition,
 )
-from playground.providers.lmstudio_client import (
-    LMStudioClient,
+from playground.providers.local_client import (
+    LocalClient,
     _format_tool_descriptions,
     _parse_prompted_tool_calls,
 )
@@ -23,39 +25,39 @@ from playground.providers.lmstudio_client import (
 
 @pytest.fixture(autouse=True)
 def _base_url(monkeypatch):
-    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://x/v1")
-    monkeypatch.delenv("LMSTUDIO_TOOL_PROMPTING", raising=False)
+    monkeypatch.setenv("LOCAL_BASE_URL", "http://x/v1")
+    monkeypatch.delenv("LOCAL_TOOL_PROMPTING", raising=False)
 
 
 # ---- _should_use_prompted_tools --------------------------------------------
 
 
 def test_should_use_prompted_for_gemma_model() -> None:
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    c = LocalClient(model="google/gemma-4-27b-it")
     assert c._should_use_prompted_tools() is True
 
 
 def test_should_not_use_prompted_for_llama_model() -> None:
-    c = LMStudioClient(model="meta/llama-3-70b-instruct")
+    c = LocalClient(model="meta/llama-3-70b-instruct")
     assert c._should_use_prompted_tools() is False
 
 
 def test_env_override_force_prompted(monkeypatch) -> None:
-    monkeypatch.setenv("LMSTUDIO_TOOL_PROMPTING", "prompted")
-    c = LMStudioClient(model="meta/llama-3-70b-instruct")
+    monkeypatch.setenv("LOCAL_TOOL_PROMPTING", "prompted")
+    c = LocalClient(model="meta/llama-3-70b-instruct")
     assert c._should_use_prompted_tools() is True
 
 
 def test_env_override_force_native(monkeypatch) -> None:
-    monkeypatch.setenv("LMSTUDIO_TOOL_PROMPTING", "native")
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    monkeypatch.setenv("LOCAL_TOOL_PROMPTING", "native")
+    c = LocalClient(model="google/gemma-4-27b-it")
     assert c._should_use_prompted_tools() is False
 
 
 def test_env_override_auto_falls_back_to_model_check(monkeypatch) -> None:
-    monkeypatch.setenv("LMSTUDIO_TOOL_PROMPTING", "auto")
-    assert LMStudioClient(model="gemma-4-9b").  _should_use_prompted_tools() is True
-    assert LMStudioClient(model="hermes-3-70b")._should_use_prompted_tools() is False
+    monkeypatch.setenv("LOCAL_TOOL_PROMPTING", "auto")
+    assert LocalClient(model="gemma-4-9b").  _should_use_prompted_tools() is True
+    assert LocalClient(model="hermes-3-70b")._should_use_prompted_tools() is False
 
 
 # ---- _format_tool_descriptions ---------------------------------------------
@@ -151,7 +153,7 @@ def _fake_completion(content: str, *, finish: str = "stop") -> MagicMock:
 
 
 def test_prompted_stream_chat_emits_text_then_tool_calls() -> None:
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    c = LocalClient(model="google/gemma-4-27b-it")
     c._client.chat.completions.create = MagicMock(  # type: ignore[assignment]
         return_value=_fake_completion(
             "Thinking...\n"
@@ -183,7 +185,7 @@ def test_prompted_stream_chat_emits_text_then_tool_calls() -> None:
 
 
 def test_prompted_stream_chat_strips_tools_from_api_call() -> None:
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    c = LocalClient(model="google/gemma-4-27b-it")
     c._client.chat.completions.create = MagicMock(  # type: ignore[assignment]
         return_value=_fake_completion("hello"),
     )
@@ -208,7 +210,7 @@ def test_prompted_stream_chat_strips_tools_from_api_call() -> None:
 
 
 def test_prompted_stream_chat_no_tool_call_in_response() -> None:
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    c = LocalClient(model="google/gemma-4-27b-it")
     c._client.chat.completions.create = MagicMock(  # type: ignore[assignment]
         return_value=_fake_completion("I don't need any tools for this."),
     )
@@ -227,7 +229,7 @@ def test_prompted_stream_chat_no_tool_call_in_response() -> None:
 
 
 def test_non_gemma_with_tools_takes_native_path() -> None:
-    c = LMStudioClient(model="meta/llama-3-70b-instruct")
+    c = LocalClient(model="meta/llama-3-70b-instruct")
     create = MagicMock(return_value=_fake_completion("text only"))
     c._client.chat.completions.create = create  # type: ignore[assignment]
 
@@ -246,7 +248,7 @@ def test_non_gemma_with_tools_takes_native_path() -> None:
 
 
 def test_no_tools_passes_through_to_streaming_parent(monkeypatch) -> None:
-    c = LMStudioClient(model="google/gemma-4-27b-it")
+    c = LocalClient(model="google/gemma-4-27b-it")
     called = {"flag": False}
 
     def fake_super_stream(*args, **kwargs):

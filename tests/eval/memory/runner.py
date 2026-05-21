@@ -38,7 +38,7 @@ def _seed_raw_turns(conn, conv_path: Path) -> None:
         )
 
 
-def _load_llm(provider: str = "lmstudio", model: str | None = None):
+def _load_llm(provider: str = "local", model: str | None = None):
     from playground.providers.registry import get_client
     return get_client(provider, model or os.getenv("DREAMER_MODEL", "local"))
 

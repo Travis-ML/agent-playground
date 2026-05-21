@@ -14,7 +14,7 @@ def mcp_tool_to_provider_format(td: ToolDefinition, provider: str) -> dict[str, 
             "description": td.description,
             "input_schema": td.input_schema,
         }
-    if provider in ("openai", "lmstudio"):
+    if provider in ("openai", "local"):
         return {
             "type": "function",
             "function": {

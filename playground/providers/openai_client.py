@@ -1,4 +1,4 @@
-"""OpenAI provider implementation. Also used by LMStudioClient via custom base_url."""
+"""OpenAI provider implementation. Also used by LocalClient via custom base_url."""
 
 from __future__ import annotations
 
